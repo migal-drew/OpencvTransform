@@ -1,4 +1,0 @@
-OpencvTransform
-===============
-
-Hello World

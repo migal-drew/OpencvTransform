@@ -88,9 +88,10 @@ if __name__ == '__main__':
         matched_p2 = np.array([kp2[j].pt for i, j in m])
         H, status = cv2.findHomography(matched_p1, matched_p2, cv2.RANSAC, 5.0)
         print '%d / %d  inliers/matched' % (np.sum(status), len(status))
-
-	print H
-	#Multiply img on Homography??
+        
+        for i in range(len(img2)):
+            img2[i][i] = np.dot(H, img2[i][i])
+            
         vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
         return vis
 
@@ -101,6 +102,8 @@ if __name__ == '__main__':
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)
+    
     cv2.imwrite('out.jpg', vis_flann)
+    #cv2.imshow('FUCK yeah', vis_flann)
     0xFF & cv2.waitKey()
     cv2.destroyAllWindows() 			
