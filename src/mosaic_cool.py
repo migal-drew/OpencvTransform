@@ -27,7 +27,7 @@ def transformPoint(p, theta):
     ans = np.dot(rot, ans)
     #Translation
     ans = ans - trans
-    print ans
+    #print ans
     return ans
 
 def costFunction(points_1, points_2, theta_1, theta_2, lambd):
@@ -39,12 +39,37 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
         J = J + error
         print error
     
+    #s_x, s_y normally = 1 => sum = sum - 4
+    norm = 4
     regularize = (lambd / (2 * m)) * (np.sum((np.square(theta_1[1:5]) +
-                                      np.square(theta_2[1:5]))) - 4)
-                                      #s_x, s_y normally = 1 => sum = 4
+                                      np.square(theta_2[1:5]))) - norm)
     #regularize = regularize - 4 
     J = J / (2 * m) + regularize
     return J
+
+def derivatives_1():
+    return None
+
+def derivatives_2():
+    return None
+
+#gamma - learning rate
+def gradientDescent(points_1, points_2, theta_1, theta_2,
+                    gamma, lambd):
+    new_theta_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
+    new_theta_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
+    
+    m = points_1.shape[0]
+    #Derivatives - respect to theta_1 and theta_2
+    der_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
+    der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
+    
+    for i in range(m):
+        der_1 = der_1 + derivatives_1()
+        der_2 = der_2 + derivatives_2()
+        new_theta_1 = new_theta_1 - gamma / (2 * m) * der_1
+        new_theta_2 = new_theta_2 - gamma / (2 * m) * der_2
+    return None
 
 if __name__ == '__main__':
     theta_1 = np.array([0, 1, 1, 0, 0, 0, 0])
