@@ -47,29 +47,92 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
     J = J / (2 * m) + regularize
     return J
 
-def derivatives_1():
-    return None
+def derivatives(p_1, p_2, theta_1, theta_2):
+    x_1, y_1 = p_1
+    x_2, y_2 = p_2
+    alpha_1, sx_1, sy_1, skx_1, sky_1, x0_1, y0_1 = theta_1
+    alpha_2, sx_2, sy_2, skx_2, sky_2, x0_2, y0_2 = theta_2
+    
+    ksi_1 = sx_1 * x_1 + sky_1 * y_1
+    eps_1 = skx_1 * x_1 + sy_1 * y_1
+    
+    ksi_2 = sx_2 * x_2 + sky_2 * y_2
+    eps_2 = skx_2 * x_2 + sy_2 * y_2
+    
+    XX = ksi_1 * cos(alpha_1) - eps_1 * sin(alpha_1) - x0_1 - ksi_2 * cos(alpha_2) + eps_2 * sin(alpha_2) + x0_2
+    YY = ksi_1 * sin(alpha_1) + eps_1 * cos(alpha_1) - y0_1 - ksi_2 * sin(alpha_2) - eps_2 * cos(alpha_2) + y0_2
+    
+    #Resulting derivatives for 1 parameters
+    deriv_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
+    #Resulting derivatives for 2 parameters
+    deriv_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
+    
+    #alpha
+    deriv_1[0] = XX * (-ksi_1 * sin(alpha_1) - eps_1 * cos(alpha_1)) + YY * (ksi_1 * cos(alpha_1) - eps_1 * sin(alpha_1))
+    #sx
+    deriv_1[1] = XX * (x_1 * cos(alpha_1)) + YY * (x_1 * sin(alpha_1))
+    #sy
+    deriv_1[2] = XX * (-y_1 * sin(alpha_1)) + YY * (y_1 * cos(alpha_1))
+    #skx
+    deriv_1[3] = XX * (-x_1 * sin(alpha_1)) + YY * (x_1 * cos(alpha_1))
+    #sky
+    deriv_1[4] = XX * (y_1 * cos(alpha_1)) + YY * (y_1 * sin(alpha_1))
+    #x0
+    deriv_1[5] = XX * (-1)
+    #y0
+    deriv_1[6] = YY * (-1)
+    
+    #===========================================================================
+    # #alpha
+    # deriv_2[0] = XX * (ksi_2 * sin(alpha_2) + eps_2 * cos(alpha_2)) + YY * (-ksi_2 * cos(alpha_2) + eps_2 * sin(alpha_2))
+    # #sx
+    # deriv_2[1] = XX * (-x_2 * cos(alpha_2)) + YY * (-x_2 * sin(alpha_2))
+    # #sy
+    # deriv_2[2] = XX * (-y_1 * sin(alpha_1)) + YY * (y_1 * cos(alpha_1))
+    # #skx
+    # deriv_2[3] = XX * (-x_1 * sin(alpha_1)) + YY * (x_1 * cos(alpha_1))
+    # #sky
+    # deriv_2[4] = XX * (y_1 * cos(alpha_1)) + YY * (y_1 * sin(alpha_1))
+    # #x0
+    # deriv_2[5] = XX * (-1)
+    # #y0
+    # deriv_2[6] = YY * (-1)
+    #===========================================================================
+    deriv_2 = (-1) * deriv_1.copy()
+    
+    return np.array([deriv_1, deriv_2])
 
-def derivatives_2():
-    return None
+#def derivatives_2(p_1, p_2, theta_1, theta_2, lambd):
+#    return None
 
 #gamma - learning rate
 def gradientDescent(points_1, points_2, theta_1, theta_2,
                     gamma, lambd):
-    new_theta_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
-    new_theta_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
+    #new_theta_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
+    #new_theta_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
+    new_theta_1 = theta_1.copy()
+    new_theta_2 = theta_2.copy()
     
     m = points_1.shape[0]
-    #Derivatives - respect to theta_1 and theta_2
-    der_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
-    der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
     
-    for i in range(m):
-        der_1 = der_1 + derivatives_1()
-        der_2 = der_2 + derivatives_2()
-        new_theta_1 = new_theta_1 - gamma / (2 * m) * der_1
-        new_theta_2 = new_theta_2 - gamma / (2 * m) * der_2
-    return None
+    for k in range(2000):
+        #Derivatives - respect to theta_1 and theta_2
+        der_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
+        der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
+        
+        for i in range(m):
+            tmp_1, tmp_2  = derivatives(points_1[i], points_2[i], theta_1, theta_2)
+            der_1 += tmp_1
+            der_2 += tmp_2
+        
+        #Penalize
+        der_1[1:5] = der_1[1:5] + lambd * new_theta_1[1:5]
+        der_2[1:5] = der_2[1:5] + lambd * new_theta_2[1:5]
+        #Refresh parameters
+        new_theta_1 = new_theta_1 - gamma * der_1 / m
+        new_theta_2 = new_theta_2 - gamma * der_2 / m
+        
+    return np.array( [new_theta_1, new_theta_2] )
 
 if __name__ == '__main__':
     theta_1 = np.array([0, 1, 1, 0, 0, 0, 0])
