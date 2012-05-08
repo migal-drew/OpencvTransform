@@ -89,10 +89,11 @@ if __name__ == '__main__':
         H, status = cv2.findHomography(matched_p1, matched_p2, cv2.RANSAC, 5.0)
         print '%d / %d  inliers/matched' % (np.sum(status), len(status))
         
-        for i in range(len(img2)):
-            img2[i][i] = np.dot(H, img2[i][i])
-            
-        vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
+        #img2 = cv2.warpPerspective(img2, H, (2272, 1704))
+        print matched_p1
+        #vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
+        vis = draw_match(cv2.warpPerspective(img1, H, (2272, 1704)), img2, 
+                         matched_p1, matched_p2, status, H)
         return vis
 
     #print 'bruteforce match:',
