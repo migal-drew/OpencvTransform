@@ -151,8 +151,10 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         new_theta_1[0] = new_theta_1[0] - gamma * der_1[0] / m
         new_theta_2[0] = new_theta_2[0] - gamma * der_2[0] / m
-        new_theta_1[3:7] = new_theta_1[3:7] - gamma * der_1[3:7] / m
-        new_theta_2[3:7] = new_theta_2[3:7] - gamma * der_2[3:7] / m
+        new_theta_1[3:5] = new_theta_1[3:5] - gamma * der_1[3:5] / m
+        new_theta_2[3:5] = new_theta_2[3:5] - gamma * der_2[3:5] / m
+        new_theta_1[5:7] = new_theta_1[5:7] - gamma * der_1[5:7] / m
+        new_theta_2[5:7] = new_theta_2[5:7] - gamma * der_2[5:7] / m
 
         treshhold = 0.1
         #If Skx >> 0.1, rollback         
@@ -200,21 +202,42 @@ if __name__ == '__main__':
     
     po_1 = np.array( [p1, p2, p3, p4, p5] )
     po_2 = po_1.copy()
-    distor_1 = np.array([1., 1, 1, 0, 0, 0, 0])
-    distor_2 = np.array([-1., 1, 1, 0, 0, -10,-10])
+    distor_1 = np.array([1.5, 1, 1, 0, 0, 0, 0])
+    distor_2 = np.array([-1., 1, 1, 0, 0, 0, 0])
     for i in range(po_1.shape[0]):
         po_1[i] = transformPoint(po_1[i], distor_1)
     for i in range(po_1.shape[0]):
         po_2[i] = transformPoint(po_2[i], distor_2)
-    print po_1
-    print po_2
+        
+    #print "po_1"
+    #s1,s2 = ""
+    
+    
     #print po_1
     #print po_2 
     gamma = 0.0001
     lambd = 10
     t_1, t_2 = gradientDescent(po_1, po_2, theta_1, theta_2, gamma, lambd)
-    #print costFunction(po_1, po_2, theta_1, theta_2, lambd)
-    #print t_1
-    #print t_2
+    #print po_1
+    #print po_2
+    s1 = ""
+    s2 = ""
+    for i in range(po_1.shape[0]):
+        s1 += (str)(po_1[i][0]) + "," + (str)(po_1[i][1]) + "," 
+        s2 += (str)(po_2[i][0]) + "," + (str)(po_2[i][1]) + ","
+    #print "po_1"
+    print s1
+    #print "po_2"
+    print s2
+    
+    s1 = ""
+    s2 = ""
+    for i in range(len(t_1)):
+        s1 += (str)(t_1[i]) + ","  
+        s2 += (str)(t_2[i]) + "," 
+    #print "theta_1"
+    print s1
+    #print "theta_2"
+    print s2
     
     
