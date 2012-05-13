@@ -111,7 +111,7 @@ def derivatives(p_1, p_2, theta_1, theta_2):
 
 #gamma - learning rate
 def gradientDescent(points_1, points_2, theta_1, theta_2,
-                    gamma, lambd):
+                    gamma, lambd, gamma_transl):
     #new_theta_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
     #new_theta_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
     new_theta_1 = theta_1.copy()
@@ -153,8 +153,8 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
         new_theta_2[0] = new_theta_2[0] - gamma * der_2[0] / m
         new_theta_1[3:5] = new_theta_1[3:5] - gamma * der_1[3:5] / m
         new_theta_2[3:5] = new_theta_2[3:5] - gamma * der_2[3:5] / m
-        new_theta_1[5:7] = new_theta_1[5:7] - gamma * der_1[5:7] / m
-        new_theta_2[5:7] = new_theta_2[5:7] - gamma * der_2[5:7] / m
+        new_theta_1[5:7] = new_theta_1[5:7] - gamma_transl * der_1[5:7] / m
+        new_theta_2[5:7] = new_theta_2[5:7] - gamma_transl * der_2[5:7] / m
 
         treshhold = 0.1
         #If Skx >> 0.1, rollback         
@@ -173,7 +173,7 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
         #new_theta_2[1:3] = theta_2[1:3]
         
         print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
-        if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < 0.01:
+        if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < 0.1:
             return np.array( [new_theta_1, new_theta_2] )
         print new_theta_1
         print new_theta_2
@@ -202,8 +202,8 @@ if __name__ == '__main__':
     
     po_1 = np.array( [p1, p2, p3, p4, p5] )
     po_2 = po_1.copy()
-    distor_1 = np.array([1.5, 1, 1, 0, 0, 0, 0])
-    distor_2 = np.array([-1., 1, 1, 0, 0, 0, 0])
+    distor_1 = np.array([1.5, 1, 1, 0, 0, -1, 2])
+    distor_2 = np.array([-1., 1, 1, 0, 0, 3, 0])
     for i in range(po_1.shape[0]):
         po_1[i] = transformPoint(po_1[i], distor_1)
     for i in range(po_1.shape[0]):
@@ -215,9 +215,11 @@ if __name__ == '__main__':
     
     #print po_1
     #print po_2 
-    gamma = 0.0001
+    gamma = 0.000001
+    gamma_transl = 0.1
+    #gamma_transl = gamma
     lambd = 10
-    t_1, t_2 = gradientDescent(po_1, po_2, theta_1, theta_2, gamma, lambd)
+    t_1, t_2 = gradientDescent(po_1, po_2, theta_1, theta_2, gamma, lambd, gamma_transl)
     #print po_1
     #print po_2
     s1 = ""
