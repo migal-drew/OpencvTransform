@@ -172,8 +172,9 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
         #new_theta_1[1:3] = theta_1[1:3]
         #new_theta_2[1:3] = theta_2[1:3]
         
+        treshhold_out = 0.001
         print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
-        if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < 0.1:
+        if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < treshhold_out:
             return np.array( [new_theta_1, new_theta_2] )
         print new_theta_1
         print new_theta_2
@@ -215,10 +216,10 @@ if __name__ == '__main__':
     
     #print po_1
     #print po_2 
-    gamma = 0.000001
+    gamma = 0.00001
     gamma_transl = 0.1
     #gamma_transl = gamma
-    lambd = 10
+    lambd = 100
     t_1, t_2 = gradientDescent(po_1, po_2, theta_1, theta_2, gamma, lambd, gamma_transl)
     #print po_1
     #print po_2
