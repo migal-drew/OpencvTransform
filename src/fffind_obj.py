@@ -3,6 +3,8 @@ import cv2
 from common import anorm
 from functools import partial
 
+import mosaic_cool as mos
+
 help_message = '''SURF image match 
 
 USAGE: findobj.py [ <image1> <image2> ]
@@ -64,6 +66,8 @@ def draw_match(img1, img2, p1, p2, status = None, H = None):
     return vis
 
 
+
+
 if __name__ == '__main__':
     import sys
     try: fn1, fn2 = sys.argv[1:3]
@@ -90,7 +94,18 @@ if __name__ == '__main__':
         print '%d / %d  inliers/matched' % (np.sum(status), len(status))
         
         #img2 = cv2.warpPerspective(img2, H, (2272, 1704))
-        print matched_p1
+        print matched_p1[0, 0]
+        print matched_p1[0, 1]
+        print matched_p1[0]
+        
+        gamma = 0.0000002
+        gamma_transl = 0.05
+        #gamma_transl = gamma
+        lambd = 100
+        theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
+        theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
+        mos.gradientDescent(matched_p1, matched_p2, theta_1, theta_2, gamma, lambd, gamma_transl)
+
         #vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
         vis = draw_match(cv2.warpPerspective(img1, H, (2272, 1704)), img2, 
                          matched_p1, matched_p2, status, H)

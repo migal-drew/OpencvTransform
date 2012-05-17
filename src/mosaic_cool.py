@@ -119,7 +119,7 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
     
     m = points_1.shape[0]
     
-    for k in range(50000):
+    for k in range(10000):
         #Derivatives - respect to theta_1 and theta_2
         der_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
         der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
@@ -156,7 +156,7 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
         new_theta_1[5:7] = new_theta_1[5:7] - gamma_transl * der_1[5:7] / m
         new_theta_2[5:7] = new_theta_2[5:7] - gamma_transl * der_2[5:7] / m
 
-        treshhold = 0.1
+        treshhold = 0.3
         #If Skx >> 0.1, rollback         
         if np.abs(new_theta_1[3]) > treshhold or np.abs(new_theta_1[4]) > treshhold:
             new_theta_1[3:5] += gamma * der_1[3:5] / m
@@ -176,8 +176,8 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
         print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
         if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < treshhold_out:
             return np.array( [new_theta_1, new_theta_2] )
-        print new_theta_1
-        print new_theta_2
+        #print new_theta_1
+        #print new_theta_2
         
     return np.array( [new_theta_1, new_theta_2] )
 
