@@ -98,18 +98,32 @@ if __name__ == '__main__':
         print matched_p1[0, 1]
         print matched_p1[0]
         
+        iterations = 100
         gamma = 0.0000002
         gamma_transl = 0.05
         #gamma_transl = gamma
         lambd = 100
         theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
-        mos.gradientDescent(matched_p1, matched_p2, theta_1, theta_2, gamma, lambd, gamma_transl)
-
+        t_1, t_2 = mos.gradientDescent(iterations, matched_p1, matched_p2,
+                                       theta_1, theta_2, gamma, lambd, gamma_transl)
+        
         #vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
-        vis = draw_match(cv2.warpPerspective(img1, H, (2272, 1704)), img2, 
-                         matched_p1, matched_p2, status, H)
-        return vis
+        #vis = draw_match(cv2.warpPerspective(img1, H, (2272, 1704)), img2, 
+        #                 matched_p1, matched_p2, status, H)
+        size = (5000, 10000)
+        m1 = mos.composeAffineMatrix(t_1)
+        m2 = mos.composeAffineMatrix(t_2)
+        #vis = draw_match(cv2.warpAffine(img1, m1, size), cv2.warpAffine(img2, m2, size),
+        #                 matched_p1, matched_p2)
+        
+        dummy = cv2.cv.fromarray(cv2.warpAffine(img1, m1, size))
+        cv2.cv.Copy(cv2.cv.fromarray(cv2.warpAffine(img2, m2, size)), 
+                           dummy)
+        
+        #cv2.imshow("Cool", np.asarray(dummy[:, :]))
+                          
+        return np.asarray(dummy[:, :])
 
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
@@ -120,6 +134,5 @@ if __name__ == '__main__':
     #cv2.imshow('find_obj SURF flann', vis_flann)
     
     cv2.imwrite('out.jpg', vis_flann)
-    #cv2.imshow('FUCK yeah', vis_flann)
     0xFF & cv2.waitKey()
     cv2.destroyAllWindows() 			

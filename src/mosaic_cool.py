@@ -51,6 +51,21 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
     J = J / (2 * m) + regularize
     return J
 
+#Returns 2X3 matrix
+def composeAffineMatrix(theta):
+    alpha = theta[0]
+    rot = np.array( [[cos(alpha), -sin(alpha)],
+                     [sin(alpha), cos(alpha)]] )
+    
+    s_sk = np.array( [[theta[1], theta[4]],
+                      [theta[3], theta[2]]] )
+    
+    trans = np.array( [theta[5], theta[6]] )
+    rot_scale = np.dot(s_sk, rot)
+    res = np.column_stack((rot_scale, trans))
+    
+    return res
+
 def derivatives(p_1, p_2, theta_1, theta_2):
     x_1, y_1 = p_1.copy()
     x_2, y_2 = p_2.copy()
@@ -110,7 +125,7 @@ def derivatives(p_1, p_2, theta_1, theta_2):
 #    return None
 
 #gamma - learning rate
-def gradientDescent(points_1, points_2, theta_1, theta_2,
+def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
                     gamma, lambd, gamma_transl):
     #new_theta_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
     #new_theta_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
@@ -119,7 +134,7 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
     
     m = points_1.shape[0]
     
-    for k in range(10000):
+    for k in range(iterations):
         #Derivatives - respect to theta_1 and theta_2
         der_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
         der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
@@ -157,7 +172,7 @@ def gradientDescent(points_1, points_2, theta_1, theta_2,
         new_theta_2[5:7] = new_theta_2[5:7] - gamma_transl * der_2[5:7] / m
 
         treshhold = 0.3
-        #If Skx >> 0.1, rollback         
+        #If Skx > threshhold, rollback         
         if np.abs(new_theta_1[3]) > treshhold or np.abs(new_theta_1[4]) > treshhold:
             new_theta_1[3:5] += gamma * der_1[3:5] / m
         if np.abs(new_theta_2[3]) > treshhold or np.abs(new_theta_2[4]) > treshhold:
@@ -220,7 +235,7 @@ if __name__ == '__main__':
     gamma_transl = 0.1
     #gamma_transl = gamma
     lambd = 100
-    t_1, t_2 = gradientDescent(po_1, po_2, theta_1, theta_2, gamma, lambd, gamma_transl)
+    t_1, t_2 = gradientDescent(1500, po_1, po_2, theta_1, theta_2, gamma, lambd, gamma_transl)
     #print po_1
     #print po_2
     s1 = ""
@@ -242,5 +257,12 @@ if __name__ == '__main__':
     print s1
     #print "theta_2"
     print s2
+    
+    print "!!!!!!!!! m1"
+    m1 = composeAffineMatrix(t_1)
+    print m1;
+    print "!!!!!!!!! m2"
+    m2 = composeAffineMatrix(t_2)
+    print m2
     
     
