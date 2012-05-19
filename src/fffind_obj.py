@@ -111,19 +111,58 @@ if __name__ == '__main__':
         #vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
         #vis = draw_match(cv2.warpPerspective(img1, H, (2272, 1704)), img2, 
         #                 matched_p1, matched_p2, status, H)
-        size = (5000, 10000)
+        size = (10000, 10000)
         m1 = mos.composeAffineMatrix(t_1)
         m2 = mos.composeAffineMatrix(t_2)
         #vis = draw_match(cv2.warpAffine(img1, m1, size), cv2.warpAffine(img2, m2, size),
         #                 matched_p1, matched_p2)
         
-        dummy = cv2.cv.fromarray(cv2.warpAffine(img1, m1, size))
-        cv2.cv.Copy(cv2.cv.fromarray(cv2.warpAffine(img2, m2, size)), 
-                           dummy)
+	print m1
+#	c_x_1 = img1.shape(0)
+#	c_y_1 = img1.shape(1)
+	c_x_1, c_y_1 = (np.asarray(img1.shape[:2]) / 2).tolist()
+	c_x_2, c_y_2 = (np.array(img2.shape[:2]) / 2).tolist()
+	
+	#Requires float matrices
+	initPrep_1 = np.array([[1., 0, -c_x_1], [0, 1, -c_y_1]])
+	initPrep_2 = np.array([[1., 0, -c_x_2], [0, 1, -c_y_2]])
+
+	#Initial prepare
+        #dummy_1 = cv2.warpAffine(img1, initPrep_1, size)
+	#cv2.imwrite("preout.jpg", img1)
+	#dummy_2 = cv2.warpAffine(img2, initPrep_2, size)
+	
+	#Transformation
+        #dummy_1 = cv2.warpAffine(dummy_1, m1, size)
+	#dummy_2 = cv2.warpAffine(dummy_2, m2, size)
+
+        dummy_1 = cv2.warpAffine(img1, m1, size)
+	dummy_2 = cv2.warpAffine(img2, m2, size)
+	#print dummy_1.dtype, dummy_1.shape
+	#cv2.imshow("test",dummy_1)	
+	mtx = np.array([[1,0,50],[0,1,100]], dtype = np.float64)
+	same = cv2.warpAffine(img1, mtx, size)
+
+
+	dummy_1 /= 2		
+	dummy_2 /= 2		
+	
+	#output = np.ndarray(size, np.float64)
+	#output += dummy_1
+	#output += dummy_2
+	#output /= 2
+	#output2 = np.ndarray(size, np.uint8)
+	#output2[:] = output
+	cv2.imwrite('output.jpg', dummy_1 + dummy_2)
+
+	#cv2.imwrite("out.jpg", dummy_1)	
+
+        #cv2.cv.Copy(cv2.cv.fromarray(cv2.warpAffine(img2, m2, size)), 
+        #                   dummy)
         
         #cv2.imshow("Cool", np.asarray(dummy[:, :]))
                           
-        return np.asarray(dummy[:, :])
+        return None
 
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
@@ -133,6 +172,6 @@ if __name__ == '__main__':
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)
     
-    cv2.imwrite('out.jpg', vis_flann)
-    0xFF & cv2.waitKey()
+    #cv2.imwrite('out.jpg', vis_flann)
+    #0xFF & cv2.waitKey()
     cv2.destroyAllWindows() 			
