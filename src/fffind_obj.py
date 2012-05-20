@@ -98,8 +98,8 @@ if __name__ == '__main__':
         size = (img1.shape[0] * 2, img1.shape[1] * 2) #(4000, 4000)
         #Initial prepare(Shift images far way from corners
         #of resulting mosaic
-        c_x_1, c_y_1 = (np.asarray(img1.shape[:2]) / 2.).tolist()
-        c_x_2, c_y_2 = (np.asarray(img2.shape[:2]) / 2.).tolist()
+        c_y_1, c_x_1 = (np.asarray(img1.shape[:2]) / 2.).tolist()
+        c_y_2, c_x_2 = (np.asarray(img2.shape[:2]) / 2.).tolist()
         print c_x_1, c_y_1
         print c_x_2, c_y_2
         
@@ -147,6 +147,10 @@ if __name__ == '__main__':
         #c_x_2 = c_x_2 + shift_x
         #c_y_2 = c_y_2 + shift_y
         
+        print "First center", c_x_1 - t_1[5], c_y_1 - t_1[6]
+        print "Second center", c_x_2 - t_2[5], c_y_2 - t_2[6]
+        #print "Differemce", c_x_1 - c_x_2, c_y_1 - c_y_2
+        
         initPrep_1 = np.array([[1., 0, c_x_1 - t_1[5]], [0, 1, c_y_1 - t_1[6]]])
         initPrep_2 = np.array([[1., 0, c_x_2 - t_2[5]], [0, 1, c_y_2 - t_2[6]]])
         dummy_1 = cv2.warpAffine(img1, initPrep_1, size)
@@ -155,14 +159,14 @@ if __name__ == '__main__':
         print "scale 1", np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
         print "scale 2", np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
         
-        scale_mat_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
-        dummy_1 = cv2.warpAffine(dummy_1, scale_mat_1, size)                      
-        scale_mat_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
-        dummy_2 = cv2.warpAffine(dummy_2, scale_mat_2, size)
+        #scale_mat_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
+        #dummy_1 = cv2.warpAffine(dummy_1, scale_mat_1, size)                      
+        #scale_mat_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
+        #dummy_2 = cv2.warpAffine(dummy_2, scale_mat_2, size)
         
-        #rotat_mat_1 = cv2.getRotationMatrix2D((c_y_1 - t_1[6], c_x_1 - t_1[5]), -a1, 1.0)
-        #dummy_1 = cv2.warpAffine(dummy_1, rotat_mat_1, size)
-        #rotat_mat_2 = cv2.getRotationMatrix2D((c_y_2 - t_2[6], c_x_2 - t_2[5]), -a2, 1.0)
+        rotat_mat_1 = cv2.getRotationMatrix2D((c_x_1 - t_1[6], c_y_1 - t_1[5]), -a1, 1.0)
+        dummy_1 = cv2.warpAffine(dummy_1, rotat_mat_1, size)
+        #rotat_mat_2 = cv2.getRotationMatrix2D((c_x_2 - t_2[6], c_y_2 - t_2[5]), -a2, 1.0)
         #dummy_2 = cv2.warpAffine(dummy_2, rotat_mat_2, size)
         
         print "This is the first matrix"
