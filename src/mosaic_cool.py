@@ -37,7 +37,7 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
         error = np.sum(np.square( transformPoint(points_1[i], theta_1) -
             transformPoint(points_2[i], theta_2) ))
         J = J + error
-        #print error
+        #print "Error-----------", error
     
     t_1 = theta_1.copy()
     t_2 = theta_2.copy()
@@ -121,14 +121,9 @@ def derivatives(p_1, p_2, theta_1, theta_2):
     #print YY
     return np.array([deriv_1, deriv_2])
 
-#def derivatives_2(p_1, p_2, theta_1, theta_2, lambd):
-#    return None
-
 #gamma - learning rate
 def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
                     gamma, lambd, gamma_transl):
-    #new_theta_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
-    #new_theta_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
     new_theta_1 = theta_1.copy()
     new_theta_2 = theta_2.copy()
     
@@ -171,7 +166,7 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
         new_theta_1[5:7] = new_theta_1[5:7] - gamma_transl * der_1[5:7] / m
         new_theta_2[5:7] = new_theta_2[5:7] - gamma_transl * der_2[5:7] / m
 
-        treshhold = 0.3
+        treshhold = 0.15
         #If Skx > threshhold, rollback         
         if np.abs(new_theta_1[3]) > treshhold or np.abs(new_theta_1[4]) > treshhold:
             new_theta_1[3:5] += gamma * der_1[3:5] / m

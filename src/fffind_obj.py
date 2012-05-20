@@ -65,9 +65,6 @@ def draw_match(img1, img2, p1, p2, status = None, H = None):
             cv2.line(vis, (x2+w1-r, y2+r), (x2+w1+r, y2-r), col, thickness)
     return vis
 
-
-
-
 if __name__ == '__main__':
     import sys
     try: fn1, fn2 = sys.argv[1:3]
@@ -93,81 +90,104 @@ if __name__ == '__main__':
         H, status = cv2.findHomography(matched_p1, matched_p2, cv2.RANSAC, 5.0)
         print '%d / %d  inliers/matched' % (np.sum(status), len(status))
         
-        #img2 = cv2.warpPerspective(img2, H, (2272, 1704))
-        print matched_p1[0, 0]
-        print matched_p1[0, 1]
-        print matched_p1[0]
+        #print matched_p1
+        #print "---------"
+        #print matched_p2
+                
+        #Size of image
+        size = (img1.shape[0] * 2, img1.shape[1] * 2) #(4000, 4000)
+        #Initial prepare(Shift images far way from corners
+        #of resulting mosaic
+        c_x_1, c_y_1 = (np.asarray(img1.shape[:2]) / 2.).tolist()
+        c_x_2, c_y_2 = (np.asarray(img2.shape[:2]) / 2.).tolist()
+        print c_x_1, c_y_1
+        print c_x_2, c_y_2
         
-        iterations = 100
+        
+        #Translate matched points in the middle
+        for i in range(matched_p1.shape[0]):
+            matched_p1[i] -= np.array([c_x_1, c_y_1])
+            matched_p2[i] -= np.array([c_x_2, c_y_2])
+        #print matched_p1
+        #print "---------"
+        #print matched_p2
+        
+        #Parameters for Gradient Descent
+        iterations = 1000
         gamma = 0.0000002
         gamma_transl = 0.05
-        #gamma_transl = gamma
-        lambd = 100
+        lambd = 1000
+        #Intitial parameters
         theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
+         
+        #Run Gradient
         t_1, t_2 = mos.gradientDescent(iterations, matched_p1, matched_p2,
                                        theta_1, theta_2, gamma, lambd, gamma_transl)
         
         #vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
         #vis = draw_match(cv2.warpPerspective(img1, H, (2272, 1704)), img2, 
         #                 matched_p1, matched_p2, status, H)
-        size = (10000, 10000)
+      
         m1 = mos.composeAffineMatrix(t_1)
         m2 = mos.composeAffineMatrix(t_2)
         #vis = draw_match(cv2.warpAffine(img1, m1, size), cv2.warpAffine(img2, m2, size),
         #                 matched_p1, matched_p2)
+     
+        print t_1[0], t_2[0]
+        a1 = (t_1[0] * (180 / np.pi))
+        a2 = (t_2[0] * (180 / np.pi))
+        print a1, a2
         
-	print m1
-#	c_x_1 = img1.shape(0)
-#	c_y_1 = img1.shape(1)
-	c_x_1, c_y_1 = (np.asarray(img1.shape[:2]) / 2).tolist()
-	c_x_2, c_y_2 = (np.array(img2.shape[:2]) / 2).tolist()
-	
-	#Requires float matrices
-	initPrep_1 = np.array([[1., 0, -c_x_1], [0, 1, -c_y_1]])
-	initPrep_2 = np.array([[1., 0, -c_x_2], [0, 1, -c_y_2]])
-
-	#Initial prepare
-        #dummy_1 = cv2.warpAffine(img1, initPrep_1, size)
-	#cv2.imwrite("preout.jpg", img1)
-	#dummy_2 = cv2.warpAffine(img2, initPrep_2, size)
-	
-	#Transformation
-        #dummy_1 = cv2.warpAffine(dummy_1, m1, size)
-	#dummy_2 = cv2.warpAffine(dummy_2, m2, size)
-
-        dummy_1 = cv2.warpAffine(img1, m1, size)
-	dummy_2 = cv2.warpAffine(img2, m2, size)
-	#print dummy_1.dtype, dummy_1.shape
-	#cv2.imshow("test",dummy_1)	
-	mtx = np.array([[1,0,50],[0,1,100]], dtype = np.float64)
-	same = cv2.warpAffine(img1, mtx, size)
-
-
-	dummy_1 /= 2		
-	dummy_2 /= 2		
-	
-	#output = np.ndarray(size, np.float64)
-	#output += dummy_1
-	#output += dummy_2
-	#output /= 2
-	#output2 = np.ndarray(size, np.uint8)
-	#output2[:] = output
-	cv2.imwrite('output.jpg', dummy_1 + dummy_2)
-
-	#cv2.imwrite("out.jpg", dummy_1)	
-
-        #cv2.cv.Copy(cv2.cv.fromarray(cv2.warpAffine(img2, m2, size)), 
-        #                   dummy)
+        shift_x, shift_y = (0, 0)
+        #Shift images far way from corners
+        #of resulting mosaic
+        #c_x_1 = c_x_1 + shift_x
+        #c_y_1 = c_y_1 + shift_y
+        #c_x_2 = c_x_2 + shift_x
+        #c_y_2 = c_y_2 + shift_y
         
-        #cv2.imshow("Cool", np.asarray(dummy[:, :]))
-                          
+        initPrep_1 = np.array([[1., 0, c_x_1 - t_1[5]], [0, 1, c_y_1 - t_1[6]]])
+        initPrep_2 = np.array([[1., 0, c_x_2 - t_2[5]], [0, 1, c_y_2 - t_2[6]]])
+        dummy_1 = cv2.warpAffine(img1, initPrep_1, size)
+        dummy_2 = cv2.warpAffine(img2, initPrep_2, size)
+            
+        print "scale 1", np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
+        print "scale 2", np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
+        
+        scale_mat_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
+        dummy_1 = cv2.warpAffine(dummy_1, scale_mat_1, size)                      
+        scale_mat_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
+        dummy_2 = cv2.warpAffine(dummy_2, scale_mat_2, size)
+        
+        #rotat_mat_1 = cv2.getRotationMatrix2D((c_y_1 - t_1[6], c_x_1 - t_1[5]), -a1, 1.0)
+        #dummy_1 = cv2.warpAffine(dummy_1, rotat_mat_1, size)
+        #rotat_mat_2 = cv2.getRotationMatrix2D((c_y_2 - t_2[6], c_x_2 - t_2[5]), -a2, 1.0)
+        #dummy_2 = cv2.warpAffine(dummy_2, rotat_mat_2, size)
+        
+        print "This is the first matrix"
+        print m1 
+        print "This is the second matrix"
+        print m2
+
+        dummy_1 /= 2		
+        dummy_2 /= 2		
+        result = dummy_1 + dummy_2
+
+        #output = np.ndarray(size, np.float64)
+        #output += dummy_1
+        #output += dummy_2
+        #output /= 2
+        #output2 = np.ndarray(size, np.uint8)
+        #output2[:] = output
+        cv2.imwrite('output.jpg', result)
+    
         return None
 
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.6 ) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.3 ) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)
