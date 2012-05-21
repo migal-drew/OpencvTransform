@@ -95,7 +95,7 @@ if __name__ == '__main__':
         #print matched_p2
                 
         #Size of image
-        size = (img1.shape[0] * 2, img1.shape[1] * 2) #(4000, 4000)
+        size = (img1.shape[1] * 2, img1.shape[0] * 2)
         #Initial prepare(Shift images far way from corners
         #of resulting mosaic
         print 'center of img '
@@ -166,6 +166,9 @@ if __name__ == '__main__':
         #print "scale 1", np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
         #print "scale 2", np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
         
+        #dummy_1 = cv2.warpAffine(dummy_1, m1, size)
+        #dummy_2 = cv2.warpAffine(dummy_2, m2, size)
+         
         scale_mat_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
         dummy_1 = cv2.warpAffine(dummy_1, scale_mat_1, size)                      
         scale_mat_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
@@ -175,14 +178,14 @@ if __name__ == '__main__':
         dummy_1 = cv2.warpAffine(dummy_1, rotat_mat_1, size)
         rotat_mat_2 = cv2.getRotationMatrix2D((c_x_2*2, c_y_2*2), -a2, 1.0)
         dummy_2 = cv2.warpAffine(dummy_2, rotat_mat_2, size)
-        
+              
         print -t_1[5], -t_1[6]
         print -t_2[5], -t_2[6]
+               
         initPrep_1 = np.array([[1, 0, -t_1[5]], [0, 1, -t_1[6]] ], np.float32)
         initPrep_2 = np.array([[1, 0, -t_2[5]], [0, 1, -t_2[6]] ], np.float32)
         dummy_1 = cv2.warpAffine(dummy_1, initPrep_1, size)
         dummy_2 = cv2.warpAffine(dummy_2, initPrep_2, size)
-
 
         #m1[0][2] -= c_x_1
         #m1[1][2] -= c_y_1
