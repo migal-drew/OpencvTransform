@@ -98,6 +98,7 @@ if __name__ == '__main__':
         size = (img1.shape[0] * 2, img1.shape[1] * 2) #(4000, 4000)
         #Initial prepare(Shift images far way from corners
         #of resulting mosaic
+        print 'center of img '
         c_y_1, c_x_1 = (np.asarray(img1.shape[:2]) / 2.).tolist()
         c_y_2, c_x_2 = (np.asarray(img2.shape[:2]) / 2.).tolist()
         print c_x_1, c_y_1
@@ -113,7 +114,7 @@ if __name__ == '__main__':
         #print matched_p2
         
         #Parameters for Gradient Descent
-        iterations = 1000
+        iterations = 600
         gamma = 0.0000002
         gamma_transl = 0.05
         lambd = 1000
@@ -128,7 +129,13 @@ if __name__ == '__main__':
         #vis = draw_match(img1, img2, matched_p1, matched_p2, status, H)
         #vis = draw_match(cv2.warpPerspective(img1, H, (2272, 1704)), img2, 
         #                 matched_p1, matched_p2, status, H)
-      
+        
+        print 'points after transform'
+        for i in range(matched_p1.shape[0]):
+            err_1, err_2 = mos.transformPoint(matched_p1[i], t_1), mos.transformPoint(matched_p2[i], t_2)
+            print err_1, err_2, "--error--", np.abs(err_1 - err_2)
+			
+        print '---------------------------------------------------'
         m1 = mos.composeAffineMatrix(t_1)
         m2 = mos.composeAffineMatrix(t_2)
         #vis = draw_match(cv2.warpAffine(img1, m1, size), cv2.warpAffine(img2, m2, size),
@@ -151,24 +158,45 @@ if __name__ == '__main__':
         print "Second center", c_x_2 - t_2[5], c_y_2 - t_2[6]
         #print "Differemce", c_x_1 - c_x_2, c_y_1 - c_y_2
         
-        initPrep_1 = np.array([[1., 0, c_x_1 - t_1[5]], [0, 1, c_y_1 - t_1[6]]])
-        initPrep_2 = np.array([[1., 0, c_x_2 - t_2[5]], [0, 1, c_y_2 - t_2[6]]])
+        initPrep_1 = np.array([[1., 0, c_x_1], [0, 1, c_y_1]])
+        initPrep_2 = np.array([[1., 0, c_x_2], [0, 1, c_y_2]])
         dummy_1 = cv2.warpAffine(img1, initPrep_1, size)
         dummy_2 = cv2.warpAffine(img2, initPrep_2, size)
             
         print "scale 1", np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
         print "scale 2", np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
         
-        #scale_mat_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
-        #dummy_1 = cv2.warpAffine(dummy_1, scale_mat_1, size)                      
-        #scale_mat_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
-        #dummy_2 = cv2.warpAffine(dummy_2, scale_mat_2, size)
+        scale_mat_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
+        dummy_1 = cv2.warpAffine(dummy_1, scale_mat_1, size)                      
+        scale_mat_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
+        dummy_2 = cv2.warpAffine(dummy_2, scale_mat_2, size)
         
-        rotat_mat_1 = cv2.getRotationMatrix2D((c_x_1 - t_1[6], c_y_1 - t_1[5]), -a1, 1.0)
+        rotat_mat_1 = cv2.getRotationMatrix2D((c_x_1*2, c_y_1*2), -a1, 1.0)
         dummy_1 = cv2.warpAffine(dummy_1, rotat_mat_1, size)
-        #rotat_mat_2 = cv2.getRotationMatrix2D((c_x_2 - t_2[6], c_y_2 - t_2[5]), -a2, 1.0)
-        #dummy_2 = cv2.warpAffine(dummy_2, rotat_mat_2, size)
+        rotat_mat_2 = cv2.getRotationMatrix2D((c_x_2*2, c_y_2*2), -a2, 1.0)
+        dummy_2 = cv2.warpAffine(dummy_2, rotat_mat_2, size)
         
+        #initPrep_1 = np.array([[1., 0, -t_1[5]], [0, 1, -t_1[6]] ])
+        #initPrep_2 = np.array([[1., 0, -t_2[5]], [0, 1, -t_2[6]] ])
+        #dummy_1 = cv2.warpAffine(img1, initPrep_1, size)
+        #dummy_2 = cv2.warpAffine(img2, initPrep_2, size)
+        m1[0][2] -= c_x_1
+        m1[1][2] -= c_y_1
+        m2[0][2] -= c_x_1
+        m2[1][2] -= c_y_1
+        print 'changing points'
+        m1 = np.vstack([m1, [0, 0, 1]])
+        m2 = np.vstack([m2, [0, 0, 1]])
+        for i in range(matched_p1.shape[0]):
+            #print np.zeros([matched_p1.shape[0], 1]) + 1
+            matched_p1 = np.column_stack((matched_p1, np.zeros((matched_p1.shape[0], 1))))
+            matched_p1[i][2] = 1
+            print m1
+            print matched_p1[i]
+			#print matched_p1[i], np.transpose(matched_p1[i])
+            matched_p1[i] = np.dot(m1, matched_p1[i])
+            print matched_p1[i]
+        print 'end changing points'
         print "This is the first matrix"
         print m1 
         print "This is the second matrix"
@@ -191,7 +219,7 @@ if __name__ == '__main__':
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.3 ) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.2 ) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)
