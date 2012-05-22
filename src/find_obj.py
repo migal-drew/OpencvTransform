@@ -95,7 +95,7 @@ if __name__ == '__main__':
     print 'bruteforce match:',
 #    vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.2 ) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.5 ) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
 #    cv2.imshow('find_obj SURF', vis_brute)
     cv2.imshow('find_obj SURF flann', vis_flann)

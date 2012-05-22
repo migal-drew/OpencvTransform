@@ -98,26 +98,24 @@ if __name__ == '__main__':
         size = (img1.shape[1] * 2, img1.shape[0] * 2)
         #Initial prepare(Shift images far way from corners
         #of resulting mosaic
-        print 'center of img '
-        c_y_1, c_x_1 = (np.asarray(img1.shape[:2]) / 2.).tolist()
-        c_y_2, c_x_2 = (np.asarray(img2.shape[:2]) / 2.).tolist()
-        print c_x_1, c_y_1
-        print c_x_2, c_y_2
+        print 'center of imges '
+        c_y, c_x = (np.asarray(img1.shape[:2]) / 2.).tolist()
+        #c_y, c_x = (np.asarray(img2.shape[:2]) / 2.).tolist()
         
         
         #Translate matched points in the middle
         for i in range(matched_p1.shape[0]):
-            matched_p1[i] -= np.array([c_x_1, c_y_1])
-            matched_p2[i] -= np.array([c_x_2, c_y_2])
+            matched_p1[i] -= np.array([c_x, c_y])
+            matched_p2[i] -= np.array([c_x, c_y])
         #print matched_p1
         #print "---------"
         #print matched_p2
         
         #Parameters for Gradient Descent
-        iterations = 500
-        gamma = 0.0000002
+        iterations = 1500
+        gamma = 0.000002
         gamma_transl = 0.05
-        lambd = 1000
+        lambd = 100
         #Intitial parameters
         theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
@@ -133,33 +131,34 @@ if __name__ == '__main__':
         print 'points after transform'
         for i in range(matched_p1.shape[0]):
             err_1, err_2 = mos.transformPoint(matched_p1[i], t_1), mos.transformPoint(matched_p2[i], t_2)
-            print err_1, err_2, "--error--", np.abs(err_1 - err_2)
+            print err_1, err_2, "  --error--  ", np.abs(err_1 - err_2)
 			
         print '---------------------------------------------------'
-        m1 = mos.composeAffineMatrix(t_1)
-        m2 = mos.composeAffineMatrix(t_2)
+        #m1 = mos.composeAffineMatrix(t_1)
+        #m2 = mos.composeAffineMatrix(t_2)
         #vis = draw_match(cv2.warpAffine(img1, m1, size), cv2.warpAffine(img2, m2, size),
         #                 matched_p1, matched_p2)
      
-        print t_1[0], t_2[0]
+        #print t_1[0], t_2[0]
+        #Rotation angles in degrees
         a1 = (t_1[0] * (180 / np.pi))
         a2 = (t_2[0] * (180 / np.pi))
-        print a1, a2
+        #print a1, a2
         
         #shift_x, shift_y = (800, 800)
         #Shift images far way from corners
         #of resulting mosaic
-        #c_x_1 = c_x_1 + shift_x
-        #c_y_1 = c_y_1 + shift_y
-        #c_x_2 = c_x_2 + shift_x
-        #c_y_2 = c_y_2 + shift_y
+        #c_x = c_x + shift_x
+        #c_y = c_y + shift_y
+        #c_x = c_x + shift_x
+        #c_y = c_y + shift_y
         
-        print "First center", c_x_1 - t_1[5], c_y_1 - t_1[6]
-        print "Second center", c_x_2 - t_2[5], c_y_2 - t_2[6]
-        #print "Differemce", c_x_1 - c_x_2, c_y_1 - c_y_2
+        print "First center", c_x - t_1[5], c_y - t_1[6]
+        print "Second center", c_x - t_2[5], c_y - t_2[6]
+        #print "Differemce", c_x - c_x, c_y - c_y
         
-        initPrep_1 = np.array([[1., 0, c_x_1], [0, 1, c_y_1]])
-        initPrep_2 = np.array([[1., 0, c_x_2], [0, 1, c_y_2]])
+        initPrep_1 = np.array([[1., 0, c_x], [0, 1, c_y]])
+        initPrep_2 = np.array([[1., 0, c_x], [0, 1, c_y]])
         dummy_1 = cv2.warpAffine(img1, initPrep_1, size)
         dummy_2 = cv2.warpAffine(img2, initPrep_2, size)
             
@@ -168,29 +167,48 @@ if __name__ == '__main__':
         
         #dummy_1 = cv2.warpAffine(dummy_1, m1, size)
         #dummy_2 = cv2.warpAffine(dummy_2, m2, size)
-         
-        scale_mat_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
-        dummy_1 = cv2.warpAffine(dummy_1, scale_mat_1, size)                      
-        scale_mat_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
-        dummy_2 = cv2.warpAffine(dummy_2, scale_mat_2, size)
         
-        rotat_mat_1 = cv2.getRotationMatrix2D((c_x_1*2, c_y_1*2), -a1, 1.0)
-        dummy_1 = cv2.warpAffine(dummy_1, rotat_mat_1, size)
-        rotat_mat_2 = cv2.getRotationMatrix2D((c_x_2*2, c_y_2*2), -a2, 1.0)
-        dummy_2 = cv2.warpAffine(dummy_2, rotat_mat_2, size)
+        #Scaling and skewing
+        mat_deform_1 = np.array([[t_1[1], t_1[4], 0], [t_1[3], t_1[2], 0]], np.float32)
+        dummy_1 = cv2.warpAffine(dummy_1, mat_deform_1, size)                      
+        mat_deform_2 = np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
+        dummy_2 = cv2.warpAffine(dummy_2, mat_deform_2, size)
+        
+        #Restore images' centers after skewing
+        cntr = np.transpose(np.array([c_x, c_y, 1]))
+        add_row = np.array([0, 0, 1])
+        mat_deform_full_1 = np.vstack((mat_deform_1, add_row))
+        mat_deform_full_2 = np.vstack((mat_deform_2, add_row))
+        cntr_err_1 = np.dot(mat_deform_full_1, cntr)
+        cntr_err_2 = np.dot(mat_deform_full_2, cntr)
+        diff_1 = (cntr - cntr_err_1) * 2
+        diff_2 = (cntr - cntr_err_2) * 2
+        print "Diff_1", diff_1
+        print "Diff_2", diff_2
+        mat_restore_1 = np.array([[1, 0, diff_1[0]], [0, 1, diff_1[1]]], np.float32)
+        mat_restore_2 = np.array([[1, 0, diff_2[0]], [0, 1, diff_2[1]]], np.float32)
+        dummy_1 = cv2.warpAffine(dummy_1, mat_restore_1, size)
+        dummy_2 = cv2.warpAffine(dummy_2, mat_restore_2, size)
+        
+        #Rotation
+        mat_rot_1 = cv2.getRotationMatrix2D((c_x * 2, c_y * 2), -a1, 1.0)
+        dummy_1 = cv2.warpAffine(dummy_1, mat_rot_1, size)
+        mat_rot_2 = cv2.getRotationMatrix2D((c_x * 2, c_y * 2), -a2, 1.0)
+        dummy_2 = cv2.warpAffine(dummy_2, mat_rot_2, size)
               
-        print -t_1[5], -t_1[6]
-        print -t_2[5], -t_2[6]
-               
-        initPrep_1 = np.array([[1, 0, -t_1[5]], [0, 1, -t_1[6]] ], np.float32)
-        initPrep_2 = np.array([[1, 0, -t_2[5]], [0, 1, -t_2[6]] ], np.float32)
-        dummy_1 = cv2.warpAffine(dummy_1, initPrep_1, size)
-        dummy_2 = cv2.warpAffine(dummy_2, initPrep_2, size)
+        #print -t_1[5], -t_1[6]
+        #print -t_2[5], -t_2[6]
+         
+        #Translation      
+        mat_trans_1 = np.array([[1, 0, -t_1[5]], [0, 1, -t_1[6]] ], np.float32)
+        mat_trans_2 = np.array([[1, 0, -t_2[5]], [0, 1, -t_2[6]] ], np.float32)
+        dummy_1 = cv2.warpAffine(dummy_1, mat_trans_1, size)
+        dummy_2 = cv2.warpAffine(dummy_2, mat_trans_2, size)
 
-        #m1[0][2] -= c_x_1
-        #m1[1][2] -= c_y_1
-        #m2[0][2] -= c_x_1
-        #m2[1][2] -= c_y_1
+        #m1[0][2] -= c_x
+        #m1[1][2] -= c_y
+        #m2[0][2] -= c_x
+        #m2[1][2] -= c_y
         #print 'changing points'
         #m1 = np.vstack([m1, [0, 0, 1]])
         #m2 = np.vstack([m2, [0, 0, 1]])
