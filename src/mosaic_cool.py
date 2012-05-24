@@ -3,9 +3,10 @@ Created on May 7, 2012
 
 @author: andrew
 '''
-
+import cv2
 import numpy as np
 from numpy.ma.core import cos, sin
+import mosaicing
 
 #theta = np.array( [alpha, s_x, s_y, sk_x, sk_y, x_0, y_0] )
 
@@ -123,7 +124,7 @@ def derivatives(p_1, p_2, theta_1, theta_2):
 
 #gamma - learning rate
 def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
-                    gamma, lambd, gamma_transl):
+                    gamma, lambd, gamma_transl, img1, img2, size, c_x, c_y):
     new_theta_1 = theta_1.copy()
     new_theta_2 = theta_2.copy()
     
@@ -172,17 +173,16 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
             new_theta_1[3:5] += gamma * der_1[3:5] / m
         if np.abs(new_theta_2[3]) > treshhold or np.abs(new_theta_2[4]) > treshhold:
             new_theta_2[3:5] += gamma * der_2[3:5] / m
-       
-        #print gamma* der_1[6] / m
-        #new_theta_1[6] = new_theta_1[6] - gamma* der_1[6] / m
-        #print new_theta_1[6]
-        #new_theta_2[6] = new_theta_2[6] - gamma* der_2[6] / m  
-        #new_theta_1[1:5] = theta_1[1:5]
-        #new_theta_2[1:5] = theta_2[1:5]
-        #new_theta_1[1:3] = theta_1[1:3]
-        #new_theta_2[1:3] = theta_2[1:3]
         
-        treshhold_out = 0.001
+        if (k < 20 or k % 100 == 0):
+            res = mosaicing.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
+            winname = "Iteration #" + (str)(k)
+            cv2.imshow(winname, res)
+            #cv2.moveWindow(winname, 0, 0)
+            0xFF & cv2.waitKey()
+            cv2.destroyAllWindows() 
+        
+        treshhold_out = 0.01
         print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
         if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < treshhold_out:
             return np.array( [new_theta_1, new_theta_2] )

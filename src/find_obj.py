@@ -42,7 +42,7 @@ def draw_match(img1, img2, p1, p2, status = None, H = None):
     if H is not None:
         corners = np.float32([[0, 0], [w1, 0], [w1, h1], [0, h1]])
         corners = np.int32( cv2.perspectiveTransform(corners.reshape(1, -1, 2), H).reshape(-1, 2) + (w1, 0) )
-        cv2.polylines(vis, [corners], True, (255, 255, 255))
+        #cv2.polylines(vis, [corners], True, (255, 255, 255))
     
     if status is None:
         status = np.ones(len(p1), np.bool_)
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     print 'bruteforce match:',
 #    vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.5 ) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.6 ) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
 #    cv2.imshow('find_obj SURF', vis_brute)
     cv2.imshow('find_obj SURF flann', vis_flann)
