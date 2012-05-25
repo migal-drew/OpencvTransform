@@ -175,11 +175,11 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
             new_theta_2[3:5] += gamma * der_2[3:5] / m
         
         if (k < 20 or k % 100 == 0):
-            res = mosaicing.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
+            #res = mosaicing.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
             winname = "Iteration #" + (str)(k)
-            cv2.imshow(winname, res)
+            #cv2.imshow(winname, res)
             #cv2.moveWindow(winname, 0, 0)
-            0xFF & cv2.waitKey()
+            #0xFF & cv2.waitKey()
             cv2.destroyAllWindows() 
         
         treshhold_out = 0.01
