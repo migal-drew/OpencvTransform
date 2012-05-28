@@ -51,16 +51,16 @@ def draw_match(img1, img2, p1, p2, status = None, H = None):
     for (x1, y1), (x2, y2), inlier in zip(np.int32(p1), np.int32(p2), status):
         col = [red, green][inlier]
         if inlier:
-            cv2.line(vis, (x1, y1), (x2+w1, y2), col)
-            cv2.circle(vis, (x1, y1), 2, col, -1)
-            cv2.circle(vis, (x2+w1, y2), 2, col, -1)
+            #cv2.line(vis, (x1, y1), (x2+w1, y2), col)
+            cv2.circle(vis, (x1, y1), 5, col, 2)
+            cv2.circle(vis, (x2+w1, y2), 5, col, 2)
         else:
             r = 2
             thickness = 3
-            cv2.line(vis, (x1-r, y1-r), (x1+r, y1+r), col, thickness)
-            cv2.line(vis, (x1-r, y1+r), (x1+r, y1-r), col, thickness)
-            cv2.line(vis, (x2+w1-r, y2-r), (x2+w1+r, y2+r), col, thickness)
-            cv2.line(vis, (x2+w1-r, y2+r), (x2+w1+r, y2-r), col, thickness)
+            #cv2.line(vis, (x1-r, y1-r), (x1+r, y1+r), col, thickness)
+            #cv2.line(vis, (x1-r, y1+r), (x1+r, y1-r), col, thickness)
+            #cv2.line(vis, (x2+w1-r, y2-r), (x2+w1+r, y2+r), col, thickness)
+            #cv2.line(vis, (x2+w1-r, y2+r), (x2+w1+r, y2-r), col, thickness)
     return vis
 
 
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     print 'bruteforce match:',
 #    vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.6 ) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.8 ) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
 #    cv2.imshow('find_obj SURF', vis_brute)
     cv2.imshow('find_obj SURF flann', vis_flann)

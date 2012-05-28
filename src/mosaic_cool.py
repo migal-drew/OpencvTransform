@@ -64,6 +64,7 @@ def composeAffineMatrix(theta):
     trans = np.array( [theta[5], theta[6]] )
     rot_scale = np.dot(s_sk, rot)
     res = np.column_stack((rot_scale, trans))
+    res = np.vstack((res, [0, 0, 1]))
     
     return res
 
@@ -145,6 +146,19 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
             der_2 += tmp_2
             #print der_1
             #print der_2
+            
+#Visualization=--------------------------------        
+        #if (k % 300 == 0):
+            #res = mosaicing.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
+            #winname = "Iteration #" + (str)(k)
+            #matrix_1 = composeAffineMatrix(new_theta_1)
+            #matrix_2 = composeAffineMatrix(new_theta_2)
+            #mosaicing.draw_distance_lines(res, points_1, points_2, new_theta_1, new_theta_2, c_x, c_y)
+            #cv2.imshow(winname, res)
+            #cv2.moveWindow(winname, 0, 0)
+            #0xFF & cv2.waitKey()
+            #cv2.destroyAllWindows() 
+#Visualization=--------------------------------
         
         #Penalize
         der_1[3:5] = der_1[3:5] + lambd * new_theta_1[3:5]
@@ -174,13 +188,7 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
         if np.abs(new_theta_2[3]) > treshhold or np.abs(new_theta_2[4]) > treshhold:
             new_theta_2[3:5] += gamma * der_2[3:5] / m
         
-        if (k < 20 or k % 100 == 0):
-            #res = mosaicing.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
-            winname = "Iteration #" + (str)(k)
-            #cv2.imshow(winname, res)
-            #cv2.moveWindow(winname, 0, 0)
-            #0xFF & cv2.waitKey()
-            cv2.destroyAllWindows() 
+
         
         treshhold_out = 0.01
         print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
@@ -229,7 +237,7 @@ if __name__ == '__main__':
     gamma = 0.00001
     gamma_transl = 0.1
     #gamma_transl = gamma
-    lambd = 100
+    lambd = 1000
     t_1, t_2 = gradientDescent(1500, po_1, po_2, theta_1, theta_2, gamma, lambd, gamma_transl)
     #print po_1
     #print po_2
