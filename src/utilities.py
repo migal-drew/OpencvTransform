@@ -6,7 +6,6 @@ Created on May 7, 2012
 import cv2
 import numpy as np
 from numpy.ma.core import cos, sin
-import mosaicing
 
 #theta = np.array( [alpha, s_x, s_y, sk_x, sk_y, x_0, y_0] )
 
@@ -45,11 +44,11 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
     t_1[1:3] = np.abs([1, 1] - t_1[1:3]) #sx & sy approxim = 1
     t_2[1:3] = np.abs([1, 1] - t_2[1:3]) #sx & sy approxim = 1
     
-    regularize = (lambd / (2 * m)) * (np.sum(np.square(t_1[1:5]) +
+    regularize = (lambd / m) * (np.sum(np.square(t_1[1:5]) +
                                       np.square(t_2[1:5])))
     #print regularize
     #print (lambd / (2 * m))
-    J = J / (2 * m) + regularize
+    J = J / m + regularize
     return J
 
 #Returns 2X3 matrix
@@ -198,6 +197,10 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
         #print new_theta_2
         
     return np.array( [new_theta_1, new_theta_2] )
+
+
+        
+
 
 if __name__ == '__main__':
     theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
