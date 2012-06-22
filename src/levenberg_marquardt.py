@@ -1,7 +1,6 @@
-import utilities
 import numpy as np
 from numpy.ma.core import cos, sin
-from src.utilities import costFunction
+import utilities as util
 
 def derivatives_with_penalty(p_1, p_2, theta_1, theta_2, lambd):
     x_1, y_1 = p_1.copy()
@@ -65,33 +64,39 @@ def derivatives_with_penalty(p_1, p_2, theta_1, theta_2, lambd):
     deriv_1[1:3] = deriv_1[1:3] + dummy_1#lambd * np.abs([1., 1] - der_1[1:3]) #sx, sy = 1
     deriv_2[1:3] = deriv_2[1:3] + dummy_2#lambd * np.abs([1., 1] - der_2[1:3]) #sx, sy = 1
             
-    return np.array([deriv_1, deriv_2])
+    return np.concatenate((deriv_1, deriv_2))
 
-def getJacobian(points_1, points_2, theta_1, theta_2, penalty):
+def getJacobian(points_1, points_2, params, penalty):
     
     #Number of points
     m = points_1.shape[0]
-    Jacobian = np.zeros([m, theta_1.size + theta_2.size])
+    Jacobian = np.zeros([m, params.size])
     
+    #print "params 1 ", params[0:params.size/2]
     for i in range(m):
         Jacobian[i] = derivatives_with_penalty(points_1[i],
                                                points_2[i],
-                                               theta_1,
-                                               theta_2,
+                                               params[0:params.size/2],
+                                               params[params.size/2:],
                                                penalty / m)
     
     return Jacobian
 
 def getGradient(Jacobian, points_1, points_2, theta_1, theta_2, penalty):
     n = theta_1.size + theta_2.size
-    m = points_1.shape[0]
     
-    grad = np.array([n, 1])
+    m = points_1.shape[0]
+    print "test ", points_1[3]
+    
+    values = np.zeros((m, 1))
+    print values
     
     for i in range(m):
-        grad[i] = costFunction(points_1[i], points_2[i], theta_1, theta_2, lambd)
-        
-    return grad
+        print "Evaluate gradient, stage ", i
+        print points_1[i], points_2[i]
+        values[i] = util.costFunctionOnePair(points_1[i], points_2[i], theta_1, theta_2, penalty / m)
+    
+    return np.dot(np.transpose(Jacobian), values)
 
 def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
                         lambd, penalty, threshold):
@@ -101,7 +106,7 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
     x = np.concatenate((theta_1, theta_2))
     len_x = x.size
     #Init 
-    x_old = x + threshold
+    x_old = x + threshold * 2
     delta_x = np.zeros(x.shape)
     #Needful Matrices
     #Jacobian = np.zeros([m, x.size])
@@ -109,12 +114,26 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
     
     iteration = 0
     
-    while (np.sum(np.abs(x_old - x) / len_x) < threshold):
+    print "start"
+    print np.sum(np.abs(x_old - x) / len_x)
+    while (np.sum(np.abs(x_old - x) / len_x) > threshold):
         #For every point    
-        Jacobian = getJacobian(points_1, points_2, theta_1, theta_2, penalty)
+        Jacobian = getJacobian(points_1, points_2, x, penalty)
+        print "Jacobian shape", Jacobian
         Hessian = np.matrix(np.dot(np.transpose(Jacobian), Jacobian))
-        gradient = 
-        delta_x = np.dot((Hessian + lambd * I).I, -gradient)
+        print 'Hessian shape', Hessian.shape
+        print "H det ", np.linalg.det(Hessian)
+        
+        print "verification", Jacobian[:][0]
+        print "verification", np.sum(Jacobian[:][7])
+        
+        gradient = getGradient(Jacobian, points_1, points_2, x[0:x.size/2], x[x.size/2:], penalty)
+        
+        #print "Jacobian", Jacobian
+        
+        tmp = np.matrix(Hessian + lambd * I)
+        #print "TMP", tmp
+        delta_x = np.dot(tmp.I, -gradient)
         
         x_old = x.copy()
         x[0] = x[0] + delta_x[0]
@@ -124,7 +143,11 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
         
         iteration += 1
         print "Iteration # ", iteration
-        print "Cost function= ", costFunction(points_1, points_2, , penalty)
+        print "Cost function= ", util.costFunction(points_1,
+                                              points_2,
+                                              x[0:x.size/2],
+                                              x[x.size/2:],
+                                              penalty)
         
     return x
             

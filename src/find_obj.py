@@ -35,6 +35,10 @@ def draw_match(img1, img2, p1, p2, status = None, H = None):
     h1, w1 = img1.shape[:2]
     h2, w2 = img2.shape[:2]
     vis = np.zeros((max(h1, h2), w1+w2), np.uint8)
+    
+    #img1 /= 2
+    #img2 /= 2
+    
     vis[:h1, :w1] = img1
     vis[:h2, w1:w1+w2] = img2
     vis = cv2.cvtColor(vis, cv2.COLOR_GRAY2BGR)
@@ -46,12 +50,12 @@ def draw_match(img1, img2, p1, p2, status = None, H = None):
     
     if status is None:
         status = np.ones(len(p1), np.bool_)
-    green = (0, 255, 0)
-    red = (0, 0, 255)
+    green = (255, 255, 255)
+    red = (255, 255, 255)
     for (x1, y1), (x2, y2), inlier in zip(np.int32(p1), np.int32(p2), status):
         col = [red, green][inlier]
         if inlier:
-            #cv2.line(vis, (x1, y1), (x2+w1, y2), col)
+            cv2.line(vis, (x1, y1), (x2+w1, y2), col, 2)
             cv2.circle(vis, (x1, y1), 5, col, 2)
             cv2.circle(vis, (x2+w1, y2), 5, col, 2)
         else:
@@ -61,7 +65,7 @@ def draw_match(img1, img2, p1, p2, status = None, H = None):
             #cv2.line(vis, (x1-r, y1+r), (x1+r, y1-r), col, thickness)
             #cv2.line(vis, (x2+w1-r, y2-r), (x2+w1+r, y2+r), col, thickness)
             #cv2.line(vis, (x2+w1-r, y2+r), (x2+w1+r, y2-r), col, thickness)
-    return vis
+    return vis 
 
 
 if __name__ == '__main__':
@@ -93,11 +97,11 @@ if __name__ == '__main__':
         return vis
 
     print 'bruteforce match:',
-#    vis_brute = match_and_draw( match_bruteforce, 0.75 )
+    vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.8 ) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.6 ) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
-#    cv2.imshow('find_obj SURF', vis_brute)
+    cv2.imshow('find_obj SURF', vis_brute)
     cv2.imshow('find_obj SURF flann', vis_flann)
     0xFF & cv2.waitKey()
     cv2.destroyAllWindows() 			

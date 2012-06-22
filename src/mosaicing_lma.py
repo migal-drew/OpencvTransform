@@ -168,7 +168,7 @@ if __name__ == '__main__':
          
         #for LMA 
         lam = 0 
-        penalty = 100
+        penalty = 0
         threshold = 0.1
         #Run LEVENBERG-MARQUARDT
         params = lma.levenberg_marquardt(matched_p1,

@@ -3,7 +3,7 @@ import cv2
 from common import anorm
 from functools import partial
 
-import utilities
+import utilities as util
 
 help_message = '''SURF image match 
 
@@ -62,8 +62,8 @@ def draw_distance_lines(img, p_1, p_2, matrix_1, matrix_2, c_x, c_y):
         #newPoint_1 = np.dot(matrix_1, p1)
         #newPoint_2 = np.dot(matrix_2, p2)
         
-        newPoint_1 = mos.transformPoint(p1[i], matrix_1)
-        newPoint_2 = mos.transformPoint(p2[i], matrix_2)
+        newPoint_1 = util.transformPoint(p1[i], matrix_1)
+        newPoint_2 = util.transformPoint(p2[i], matrix_2)
         
         newPoint_1[0] = newPoint_1[0] + c_x * 2;
         newPoint_1[1] = newPoint_1[1] + c_y * 2;
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         #print matched_p2
         
         #Parameters for Gradient Descent
-        iterations = 2000
+        iterations = 5
         gamma = 0.000002
         gamma_transl = 0.05
         lambd = 10e3
@@ -180,13 +180,13 @@ if __name__ == '__main__':
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
          
         #Run Gradient
-        t_1, t_2 = mos.gradientDescent(iterations, matched_p1, matched_p2,
+        t_1, t_2 = util.gradientDescent(iterations, matched_p1, matched_p2,
                                        theta_1, theta_2, gamma, lambd, gamma_transl,
                                        img1, img2, size, c_x, c_y)
         
         print 'points after transform'
         for i in range(matched_p1.shape[0]):
-            err_1, err_2 = mos.transformPoint(matched_p1[i], t_1), mos.transformPoint(matched_p2[i], t_2)
+            err_1, err_2 = util.transformPoint(matched_p1[i], t_1), util.transformPoint(matched_p2[i], t_2)
             print err_1, err_2, "  --error--  ", np.abs(err_1 - err_2)
 			
         print '---------------------------------------------------'

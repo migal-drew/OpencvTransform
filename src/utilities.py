@@ -3,7 +3,6 @@ Created on May 7, 2012
 
 @author: andrew
 '''
-import cv2
 import numpy as np
 from numpy.ma.core import cos, sin
 
@@ -32,12 +31,13 @@ def transformPoint(p, theta):
 
 def costFunction(points_1, points_2, theta_1, theta_2, lambd):
     m = points_1.shape[0]
+    m = 1
     J = 0;
     for i in range(m):
         error = np.sum(np.square( transformPoint(points_1[i], theta_1) -
             transformPoint(points_2[i], theta_2) ))
         J = J + error
-        #print "Error-----------", error
+        print "Error-----------", error
     
     t_1 = theta_1.copy()
     t_2 = theta_2.copy()
@@ -49,6 +49,26 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
     #print regularize
     #print (lambd / (2 * m))
     J = J / m + regularize
+    return J
+
+def costFunctionOnePair(point_1, point_2, theta_1, theta_2, lambd):
+    J = 0;
+    print "Points in cost function", point_1, point_2
+    error = np.sum(np.square( transformPoint(point_1, theta_1) -
+        transformPoint(point_2, theta_2) ))
+    J = J + error
+    print "Error-----------", error
+    
+    t_1 = theta_1.copy()
+    t_2 = theta_2.copy()
+    t_1[1:3] = np.abs([1, 1] - t_1[1:3]) #sx & sy approxim = 1
+    t_2[1:3] = np.abs([1, 1] - t_2[1:3]) #sx & sy approxim = 1
+    
+    regularize = (lambd) * (np.sum(np.square(t_1[1:5]) +
+                                      np.square(t_2[1:5])))
+    #print regularize
+    #print (lambd / (2 * m))
+    J = J + regularize
     return J
 
 #Returns 2X3 matrix
@@ -187,7 +207,8 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
         if np.abs(new_theta_2[3]) > treshhold or np.abs(new_theta_2[4]) > treshhold:
             new_theta_2[3:5] += gamma * der_2[3:5] / m
         
-
+        print "verfic", der_1[0]
+        print "verfic", der_2[0]
         
         treshhold_out = 0.01
         print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
