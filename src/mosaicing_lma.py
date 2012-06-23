@@ -167,9 +167,9 @@ if __name__ == '__main__':
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
          
         #for LMA 
-        lam = 0 
-        penalty = 0
-        threshold = 0.1
+        lam = 10
+        penalty = 10e2
+        threshold = 0.01
         #Run LEVENBERG-MARQUARDT
         params = lma.levenberg_marquardt(matched_p1,
                                          matched_p2,
@@ -181,6 +181,9 @@ if __name__ == '__main__':
         
         t_1 = params[0:params.size / 2] 
         t_2 = params[params.size / 2:]
+        
+        print "T_1", t_1
+        print "T_2", t_2
         
         print 'points after transform'
         for i in range(matched_p1.shape[0]):

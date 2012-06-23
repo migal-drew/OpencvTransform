@@ -179,9 +179,13 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
             #cv2.destroyAllWindows() 
 #Visualization=--------------------------------
         
+        print "Sum of derivatives for 1st parameter without penalty", der_1[0]
+        
         #Penalize
         der_1[3:5] = der_1[3:5] + lambd * new_theta_1[3:5]
         der_2[3:5] = der_2[3:5] + lambd * new_theta_2[3:5]
+        
+        print "Sum of derivatives for 1st parameter WITH penalty", der_1[0]
         #print der_1[1:3]
         #print dummy_1
         dummy_1 = lambd * np.abs(np.array([1., 1]) - new_theta_1[1:3])

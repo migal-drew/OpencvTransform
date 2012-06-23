@@ -171,7 +171,7 @@ if __name__ == '__main__':
         #print matched_p2
         
         #Parameters for Gradient Descent
-        iterations = 5
+        iterations = 1
         gamma = 0.000002
         gamma_transl = 0.05
         lambd = 10e3

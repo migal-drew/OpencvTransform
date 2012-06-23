@@ -54,8 +54,8 @@ def derivatives_with_penalty(p_1, p_2, theta_1, theta_2, lambd):
     deriv_2[6] = YY
     
     #Penalize
-    deriv_1[0] = deriv_1[0] + lambd * theta_1[0]
-    deriv_2[0] = deriv_2[0] + lambd * theta_2[0]
+    #deriv_1[0] = deriv_1[0] + lambd * theta_1[0]
+    #deriv_2[0] = deriv_2[0] + lambd * theta_2[0]
     deriv_1[3:5] = deriv_1[3:5] + lambd * theta_1[3:5]
     deriv_2[3:5] = deriv_2[3:5] + lambd * theta_2[3:5]
     
@@ -63,7 +63,10 @@ def derivatives_with_penalty(p_1, p_2, theta_1, theta_2, lambd):
     dummy_2 = lambd * np.abs(np.array([1., 1]) - theta_2[1:3])
     deriv_1[1:3] = deriv_1[1:3] + dummy_1#lambd * np.abs([1., 1] - der_1[1:3]) #sx, sy = 1
     deriv_2[1:3] = deriv_2[1:3] + dummy_2#lambd * np.abs([1., 1] - der_2[1:3]) #sx, sy = 1
-            
+     
+    deriv_1[1:3] = np.array([0, 0]);
+    deriv_2[1:3] = np.array([0, 0]);
+    
     return np.concatenate((deriv_1, deriv_2))
 
 def getJacobian(points_1, points_2, params, penalty):
@@ -112,35 +115,13 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
     #Jacobian = np.zeros([m, x.size])
     I = np.identity(len_x, np.float32)
     
-    iteration = 0
+    iteration = -1
     
     print "start"
     print np.sum(np.abs(x_old - x) / len_x)
-    while (np.sum(np.abs(x_old - x) / len_x) > threshold):
-        #For every point    
-        Jacobian = getJacobian(points_1, points_2, x, penalty)
-        print "Jacobian shape", Jacobian
-        Hessian = np.matrix(np.dot(np.transpose(Jacobian), Jacobian))
-        print 'Hessian shape', Hessian.shape
-        print "H det ", np.linalg.det(Hessian)
-        
-        print "verification", Jacobian[:][0]
-        print "verification", np.sum(Jacobian[:][7])
-        
-        gradient = getGradient(Jacobian, points_1, points_2, x[0:x.size/2], x[x.size/2:], penalty)
-        
-        #print "Jacobian", Jacobian
-        
-        tmp = np.matrix(Hessian + lambd * I)
-        #print "TMP", tmp
-        delta_x = np.dot(tmp.I, -gradient)
-        
-        x_old = x.copy()
-        x[0] = x[0] + delta_x[0]
-        x[3:7] = x[3:7] + delta_x[3:7]
-        x[8] = x[8] + delta_x[8]
-        x[10:14] = x[10:14] + delta_x[10:14]
-        
+    
+    flag = True
+    while ( (np.sum(np.abs(x_old - x) / len_x) and (flag) ) > threshold):
         iteration += 1
         print "Iteration # ", iteration
         print "Cost function= ", util.costFunction(points_1,
@@ -148,6 +129,48 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
                                               x[0:x.size/2],
                                               x[x.size/2:],
                                               penalty)
+        #For every point    
+        Jacobian = getJacobian(points_1, points_2, x, penalty)
+        #print "Jacobian shape", Jacobian
+        Hessian = np.matrix(np.dot(np.transpose(Jacobian), Jacobian))
+        print 'Hessian shape', Hessian.shape
+        print "H det = ", np.linalg.det(Hessian)
+        
+        print "Sum of derivatives for 1st parameter = ", np.sum(Jacobian[:][0])
+        
+        gradient = getGradient(Jacobian, points_1, points_2, x[0:x.size/2], x[x.size/2:], penalty)
+        
+        #print "Jacobian", Jacobian
+        
+        #tmp = np.matrix(Hessian + lambd * I)
+        #print "TMP", tmp
+        #delta_x = np.dot(tmp.I, -gradient)
+        delta_x = np.linalg.lstsq(Hessian + lambd * I, -gradient)
+        
+        #print "x", x
+        #print"delta_x", delta_x[0]
+        
+        x_old = x.copy()
+        x = x + np.transpose(delta_x[0])
+        #print "delta_x[0]", delta_x[0]
+        
+        print "this is NEW x", x[0:7]
+        
+        if (util.costFunction(points_1, points_2, x[0:7], x[7:14], lambd) >=
+            util.costFunction(points_1, points_2, x_old[0:7], x_old[7:14], lambd)):
+            lambd *=2
+            flag = True
+        else:
+            lambd = 10
+            flag = False
+        
+        
+        #x[0] = x[0] + np.transpose(delta_x[0][0])
+        #x[3:7] = x[3:7] + np.transpose(delta_x[0][3:7])
+        #x[8] = x[8] + np.transpose(delta_x[0][8])
+        #x[10:14] = x[10:14] + np.transpose(delta_x[0][10:14])
+        
+        
         
     return x
             
