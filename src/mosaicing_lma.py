@@ -4,6 +4,7 @@ from common import anorm
 import utilities as util
 import levenberg_marquardt as lma
 
+
 help_message = '''SURF image match 
 
 USAGE: [ <image1> <image2> ]
@@ -54,8 +55,8 @@ def draw_distance_lines(img, p_1, p_2, matrix_1, matrix_2, c_x, c_y):
         #newPoint_1 = np.dot(matrix_1, p1)
         #newPoint_2 = np.dot(matrix_2, p2)
         
-        newPoint_1 = mos.transformPoint(p1[i], matrix_1)
-        newPoint_2 = mos.transformPoint(p2[i], matrix_2)
+        newPoint_1 = util.transformPoint(p1[i], matrix_1)
+        newPoint_2 = util.transformPoint(p2[i], matrix_2)
         
         newPoint_1[0] = newPoint_1[0] + c_x * 2;
         newPoint_1[1] = newPoint_1[1] + c_y * 2;
@@ -168,7 +169,7 @@ if __name__ == '__main__':
          
         #for LMA 
         lam = 10
-        penalty = 10e2
+        penalty = 10e4
         threshold = 0.01
         #Run LEVENBERG-MARQUARDT
         params = lma.levenberg_marquardt(matched_p1,
@@ -177,7 +178,9 @@ if __name__ == '__main__':
                                          theta_2,
                                          lam,
                                          penalty, 
-                                         threshold)
+                                         threshold,
+                                         img1,
+                                         img2)
         
         t_1 = params[0:params.size / 2] 
         t_2 = params[params.size / 2:]
@@ -201,7 +204,7 @@ if __name__ == '__main__':
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.25) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.3) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)

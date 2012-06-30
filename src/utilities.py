@@ -37,7 +37,7 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
         error = np.sum(np.square( transformPoint(points_1[i], theta_1) -
             transformPoint(points_2[i], theta_2) ))
         J = J + error
-        print "Error-----------", error
+        #print "Error-----------", error
     
     t_1 = theta_1.copy()
     t_2 = theta_2.copy()
@@ -53,21 +53,23 @@ def costFunction(points_1, points_2, theta_1, theta_2, lambd):
 
 def costFunctionOnePair(point_1, point_2, theta_1, theta_2, lambd):
     J = 0;
-    print "Points in cost function", point_1, point_2
+    #print "Points in cost function", point_1, point_2
     error = np.sum(np.square( transformPoint(point_1, theta_1) -
         transformPoint(point_2, theta_2) ))
     J = J + error
-    print "Error-----------", error
+    #print "Error-----------", error
     
     t_1 = theta_1.copy()
     t_2 = theta_2.copy()
     t_1[1:3] = np.abs([1, 1] - t_1[1:3]) #sx & sy approxim = 1
     t_2[1:3] = np.abs([1, 1] - t_2[1:3]) #sx & sy approxim = 1
     
-    regularize = (lambd) * (np.sum(np.square(t_1[1:5]) +
-                                      np.square(t_2[1:5])))
-    #print regularize
-    #print (lambd / (2 * m))
+    regularize = 0
+    regularize += np.sum(np.square(t_1[3:5]) +
+                                      np.square(t_2[3:5]))
+    regularize += np.sum(np.square(t_1[0]) +
+                                      np.square(t_2[0]))
+    regularize *= lambd
     J = J + regularize
     return J
 
@@ -79,7 +81,7 @@ def composeAffineMatrix(theta):
     
     s_sk = np.array( [[theta[1], theta[4]],
                       [theta[3], theta[2]]] )
-    
+     
     trans = np.array( [theta[5], theta[6]] )
     rot_scale = np.dot(s_sk, rot)
     res = np.column_stack((rot_scale, trans))
@@ -156,6 +158,7 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
         der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
         
         for i in range(m):
+            
             tmp_1, tmp_2  = derivatives(points_1[i], points_2[i], new_theta_1, new_theta_2)
             #print "deriv_1"
             #print tmp_1
@@ -167,25 +170,27 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
             #print der_2
             
 #Visualization=--------------------------------        
-        #if (k % 300 == 0):
-            #res = mosaicing.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
-            #winname = "Iteration #" + (str)(k)
-            #matrix_1 = composeAffineMatrix(new_theta_1)
-            #matrix_2 = composeAffineMatrix(new_theta_2)
-            #mosaicing.draw_distance_lines(res, points_1, points_2, new_theta_1, new_theta_2, c_x, c_y)
-            #cv2.imshow(winname, res)
-            #cv2.moveWindow(winname, 0, 0)
-            #0xFF & cv2.waitKey()
-            #cv2.destroyAllWindows() 
+#        if (k % 300 == 0):
+#            res = util.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
+#            winname = "Iteration #" + (str)(k)
+#            matrix_1 = composeAffineMatrix(new_theta_1)
+#            matrix_2 = composeAffineMatrix(new_theta_2)
+#            mosaicing.draw_distance_lines(res, points_1, points_2, new_theta_1, new_theta_2, c_x, c_y)
+#            cv2.imshow(winname, res)
+#            cv2.moveWindow(winname, 0, 0)
+#            0xFF & cv2.waitKey()
+#            cv2.destroyAllWindows() 
 #Visualization=--------------------------------
         
-        print "Sum of derivatives for 1st parameter without penalty", der_1[0]
+        #print "Sum of derivatives for 1st parameter without penalty", der_1[0]
+        
+        
         
         #Penalize
         der_1[3:5] = der_1[3:5] + lambd * new_theta_1[3:5]
         der_2[3:5] = der_2[3:5] + lambd * new_theta_2[3:5]
         
-        print "Sum of derivatives for 1st parameter WITH penalty", der_1[0]
+        #print "Sum of derivatives for 1st parameter WITH penalty", der_1[0]
         #print der_1[1:3]
         #print dummy_1
         dummy_1 = lambd * np.abs(np.array([1., 1]) - new_theta_1[1:3])
@@ -211,11 +216,14 @@ def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
         if np.abs(new_theta_2[3]) > treshhold or np.abs(new_theta_2[4]) > treshhold:
             new_theta_2[3:5] += gamma * der_2[3:5] / m
         
-        print "verfic", der_1[0]
-        print "verfic", der_2[0]
+        #print "verfic", der_1[0]
+        #print "verfic", der_2[0]
         
         treshhold_out = 0.01
+        
+        print "iteration # ", k
         print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
+        
         if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < treshhold_out:
             return np.array( [new_theta_1, new_theta_2] )
         #print new_theta_1
