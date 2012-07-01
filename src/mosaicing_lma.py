@@ -26,96 +26,6 @@ def match_flann(desc1, desc2, r_threshold = 0.6):
     pairs = np.int32( zip(idx1, idx2[:,0]) )
     return pairs[mask]
 
-def stitch_for_visualization(img1, img2, t_1, t_2, c_x, c_y, size):
-    new_img_1 = transform_for_opencv(img1, t_1, size, c_x, c_y)
-    new_img_2 = transform_for_opencv(img2, t_2, size, c_x, c_y)
-    
-    new_img_1 /= 2
-    new_img_2 /= 2
-    
-    result = new_img_1 + new_img_2
-    
-    return result
-
-def draw_distance_lines(img, p_1, p_2, matrix_1, matrix_2, c_x, c_y):
-    p1 = p_1.copy()
-    p2 = p_2.copy()
-    green = (0, 255, 0)
-    blue = (255, 0, 0)
-    red = (0, 0, 255)
-    
-    col = (255, 255, 255, 0)
-    
-    for i in range(p1.shape[0]):
-        #p1 = np.hstack((p_1[i], [1]))
-        #p2 = np.hstack((p_2[i], [1]))
-        print "m1", matrix_1, matrix_1.shape
-        print "p1", p1, p1.shape
-        
-        #newPoint_1 = np.dot(matrix_1, p1)
-        #newPoint_2 = np.dot(matrix_2, p2)
-        
-        newPoint_1 = util.transformPoint(p1[i], matrix_1)
-        newPoint_2 = util.transformPoint(p2[i], matrix_2)
-        
-        newPoint_1[0] = newPoint_1[0] + c_x * 2;
-        newPoint_1[1] = newPoint_1[1] + c_y * 2;
-        newPoint_2[0] = newPoint_2[0] + c_x * 2;
-        newPoint_2[1] = newPoint_2[1] + c_y * 2;
-    
-        print "NewPoint_1", newPoint_1
-        (x1, y1) = ((int)(newPoint_1[0]), (int)(newPoint_1[1]))
-        (x2, y2) = ((int)(newPoint_2[0]), (int)(newPoint_2[1]))
-        
-        cv2.circle(img, (x1, y1), 6, col, -1)
-        cv2.circle(img, (x2, y2), 6, col, -1)
-        
-        cv2.line(img, (x1, y1), (x2, y2), col, 1)
-    
-
-def transform_for_opencv(img, t, size, c_x, c_y):
-    #Rotation angles in degrees
-    a1 = (t[0] * (180 / np.pi))
-    
-    #shift_x, shift_y = (800, 800)
-    #Shift images far way from corners
-    #of resulting mosaic
-    #c_x = c_x + shift_x
-    #c_y = c_y + shift_y
-    #c_x = c_x + shift_x
-    #c_y = c_y + shift_y
-    
-    initPrep_1 = np.array([[1., 0, c_x], [0, 1, c_y]])
-    new_img = cv2.warpAffine(img, initPrep_1, size)
-        
-    #print "scale 1", np.array([[t[1], t[4], 0], [t[3], t[2], 0]], np.float32)
-    #print "scale 2", np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
-    
-    #new_img = cv2.warpAffine(new_img, m1, size)
-    #dummy_2 = cv2.warpAffine(dummy_2, m2, size)
-    
-    #Scaling and skewing
-    mat_deform_1 = np.array([[t[1], t[4], 0], [t[3], t[2], 0]], np.float32)
-    new_img = cv2.warpAffine(new_img, mat_deform_1, size)                      
-    
-    #Restore images' centers after skewing
-    cntr = np.transpose(np.array([c_x, c_y, 1]))
-    add_row = np.array([0, 0, 1])
-    mat_deform_full_1 = np.vstack((mat_deform_1, add_row))
-    cntr_err_1 = np.dot(mat_deform_full_1, cntr)
-    diff_1 = (cntr - cntr_err_1) * 2
-    mat_restore_1 = np.array([[1, 0, diff_1[0]], [0, 1, diff_1[1]]], np.float32)
-    new_img = cv2.warpAffine(new_img, mat_restore_1, size)
-    
-    #Rotation
-    mat_rot = cv2.getRotationMatrix2D((c_x * 2, c_y * 2), -a1, 1.0)
-    new_img = cv2.warpAffine(new_img, mat_rot, size)
-
-    #Translation      
-    mat_trans_1 = np.array([[1, 0, -t[5]], [0, 1, -t[6]] ], np.float32)
-    new_img = cv2.warpAffine(new_img, mat_trans_1, size)
-    
-    return new_img
 
 if __name__ == '__main__':
     import sys
@@ -167,10 +77,10 @@ if __name__ == '__main__':
         theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
          
-        #for LMA 
-        lam = 10
+        #for LMA
+        lam = 10.0
         penalty = 10e4
-        threshold = 0.01
+        threshold = 0.0000000001
         #Run LEVENBERG-MARQUARDT
         params = lma.levenberg_marquardt(matched_p1,
                                          matched_p2,
@@ -195,7 +105,9 @@ if __name__ == '__main__':
 			
         print '---------------------------------------------------'
       
-        result = stitch_for_visualization(img1, img2, t_1, t_2, c_x, c_y, size)
+        result = util.stitch_for_visualization(img1, img2, t_1, t_2, c_x, c_y, size)
+        
+        util.visualize(img1, img2, matched_p1, matched_p2, t_1, t_2)
         
         cv2.imwrite('output.jpg', result)
     
@@ -204,7 +116,7 @@ if __name__ == '__main__':
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.3) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.1) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)

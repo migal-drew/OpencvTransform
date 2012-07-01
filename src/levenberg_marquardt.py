@@ -2,9 +2,6 @@ import numpy as np
 from numpy.ma.core import cos, sin
 import utilities as util
 
-import mosaicing_gradient as mos
-import cv2
-
 def derivatives_with_penalty(p_1, p_2, theta_1, theta_2, lambd):
     x_1, y_1 = p_1.copy()
     x_2, y_2 = p_2.copy()
@@ -67,8 +64,8 @@ def derivatives_with_penalty(p_1, p_2, theta_1, theta_2, lambd):
     #deriv_1[1:3] = deriv_1[1:3] + dummy_1#lambd * np.abs([1., 1] - der_1[1:3]) #sx, sy = 1
     #deriv_2[1:3] = deriv_2[1:3] + dummy_2#lambd * np.abs([1., 1] - der_2[1:3]) #sx, sy = 1
      
-    deriv_1[1:3] = np.array([0, 0])
-    deriv_2[1:3] = np.array([0, 0])
+    #deriv_1[1:3] = np.array([0, 0])
+    #deriv_2[1:3] = np.array([0, 0])
     
     return np.concatenate((deriv_1, deriv_2))
 
@@ -165,8 +162,11 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
         #print "delta_x", delta_x[0].ravel()
         #Delta x 
         d_x = delta_x[0].ravel()
-        x = x + d_x
-        
+        #x = x + d_x
+        x[0] = x[0] + d_x[0]
+        x[3:7] = x[3:7] + d_x[3:7]
+        x[7] = x[7] + d_x[7]
+        x[10:14] = x[10:14] + d_x[10:14]
         
 #        if (i % 300 == 0):
 #            c_y, c_x = (np.asarray(img1.shape[:2]) / 2.).tolist()
@@ -180,7 +180,7 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
 #            0xFF & cv2.waitKey()
 #            cv2.destroyAllWindows() 
         
-        e = 0.3
+        e = 0.2
         if (np.abs(x[3]) > e or np.abs(x[4]) > e or np.abs(x[10]) > e or np.abs(x[11]) > e ):
             x[3:5] = x_old[3:5]
             x[10:12] = x_old[10:12]
@@ -189,11 +189,11 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
         
         if (util.costFunction(points_1, points_2, x[0:7], x[7:14], penalty) >
             util.costFunction(points_1, points_2, x_old[0:7], x_old[7:14], penalty)):
-            lambd *= 2
+            lambd *= 1.2
             flag = True
             x = x_old
         else:
-            lambd /= 2
+            lambd /= 1.2
             flag = False
             
         #print"x_old", x_old

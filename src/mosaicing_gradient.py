@@ -33,96 +33,92 @@ def match_flann(desc1, desc2, r_threshold = 0.6):
     pairs = np.int32( zip(idx1, idx2[:,0]) )
     return pairs[mask]
 
-def stitch_for_visualization(img1, img2, t_1, t_2, c_x, c_y, size):
-    new_img_1 = transform_for_opencv(img1, t_1, size, c_x, c_y)
-    new_img_2 = transform_for_opencv(img2, t_2, size, c_x, c_y)
-    
-    new_img_1 /= 2
-    new_img_2 /= 2
-    
-    result = new_img_1 + new_img_2
-    
-    return result
 
-def draw_distance_lines(img, p_1, p_2, matrix_1, matrix_2, c_x, c_y):
-    p1 = p_1.copy()
-    p2 = p_2.copy()
-    green = (0, 255, 0)
-    blue = (255, 0, 0)
-    red = (0, 0, 255)
+def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
+                    gamma, lambd, gamma_transl, img1, img2, size, c_x, c_y):
+    new_theta_1 = theta_1.copy()
+    new_theta_2 = theta_2.copy()
     
-    col = (255, 255, 255, 0)
+    m = points_1.shape[0]
     
-    for i in range(p1.shape[0]):
-        #p1 = np.hstack((p_1[i], [1]))
-        #p2 = np.hstack((p_2[i], [1]))
-        print "m1", matrix_1, matrix_1.shape
-        print "p1", p1, p1.shape
+    for k in range(iterations):
+        #Derivatives - respect to theta_1 and theta_2
+        der_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
+        der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
         
-        #newPoint_1 = np.dot(matrix_1, p1)
-        #newPoint_2 = np.dot(matrix_2, p2)
+        for i in range(m):
+            
+            tmp_1, tmp_2  = util.derivatives(points_1[i], points_2[i], new_theta_1, new_theta_2)
+            #print "deriv_1"
+            #print tmp_1
+            #print "deriv_2"
+            #print tmp_2
+            der_1 += tmp_1
+            der_2 += tmp_2
+            #print der_1
+            #print der_2
+            
+#Visualization=--------------------------------        
+#        if (k % 300 == 0):
+#            res = util.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
+#            winname = "Iteration #" + (str)(k)
+#            matrix_1 = composeAffineMatrix(new_theta_1)
+#            matrix_2 = composeAffineMatrix(new_theta_2)
+#            mosaicing.draw_distance_lines(res, points_1, points_2, new_theta_1, new_theta_2, c_x, c_y)
+#            cv2.imshow(winname, res)
+#            cv2.moveWindow(winname, 0, 0)
+#            0xFF & cv2.waitKey()
+#            cv2.destroyAllWindows() 
+#Visualization=--------------------------------
         
-        newPoint_1 = util.transformPoint(p1[i], matrix_1)
-        newPoint_2 = util.transformPoint(p2[i], matrix_2)
+        #print "Sum of derivatives for 1st parameter without penalty", der_1[0]
         
-        newPoint_1[0] = newPoint_1[0] + c_x * 2;
-        newPoint_1[1] = newPoint_1[1] + c_y * 2;
-        newPoint_2[0] = newPoint_2[0] + c_x * 2;
-        newPoint_2[1] = newPoint_2[1] + c_y * 2;
-    
-        print "NewPoint_1", newPoint_1
-        (x1, y1) = ((int)(newPoint_1[0]), (int)(newPoint_1[1]))
-        (x2, y2) = ((int)(newPoint_2[0]), (int)(newPoint_2[1]))
         
-        cv2.circle(img, (x1, y1), 6, col, -1)
-        cv2.circle(img, (x2, y2), 6, col, -1)
         
-        cv2.line(img, (x1, y1), (x2, y2), col, 1)
-    
+        #Penalize
+        der_1[3:5] = der_1[3:5] + lambd * new_theta_1[3:5]
+        der_2[3:5] = der_2[3:5] + lambd * new_theta_2[3:5]
+        
+        #print "Sum of derivatives for 1st parameter WITH penalty", der_1[0]
+        #print der_1[1:3]
+        #print dummy_1
+        dummy_1 = lambd * np.abs(np.array([1., 1]) - new_theta_1[1:3])
+        dummy_2 = lambd * np.abs(np.array([1., 1]) - new_theta_2[1:3])
+        der_1[1:3] = der_1[1:3] + dummy_1#lambd * np.abs([1., 1] - der_1[1:3]) #sx, sy = 1
+        der_2[1:3] = der_2[1:3] + dummy_2#lambd * np.abs([1., 1] - der_2[1:3]) #sx, sy = 1
+        #Refresh parameters
+        #new_theta_1 = new_theta_1 - gamma * der_1 / m #- lambd * new_theta_1 / m
+        #new_theta_2 = new_theta_2 - gamma * der_2 / m #- lambd * new_theta_2 / m
+        
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        new_theta_1[0] = new_theta_1[0] - gamma * der_1[0] / m
+        new_theta_2[0] = new_theta_2[0] - gamma * der_2[0] / m
+        new_theta_1[3:5] = new_theta_1[3:5] - gamma * der_1[3:5] / m
+        new_theta_2[3:5] = new_theta_2[3:5] - gamma * der_2[3:5] / m
+        new_theta_1[5:7] = new_theta_1[5:7] - gamma_transl * der_1[5:7] / m
+        new_theta_2[5:7] = new_theta_2[5:7] - gamma_transl * der_2[5:7] / m
 
-def transform_for_opencv(img, t, size, c_x, c_y):
-    #Rotation angles in degrees
-    a1 = (t[0] * (180 / np.pi))
-    
-    #shift_x, shift_y = (800, 800)
-    #Shift images far way from corners
-    #of resulting mosaic
-    #c_x = c_x + shift_x
-    #c_y = c_y + shift_y
-    #c_x = c_x + shift_x
-    #c_y = c_y + shift_y
-    
-    initPrep_1 = np.array([[1., 0, c_x], [0, 1, c_y]])
-    new_img = cv2.warpAffine(img, initPrep_1, size)
+        treshhold = 0.15
+        #If Skx > threshhold, rollback         
+        if np.abs(new_theta_1[3]) > treshhold or np.abs(new_theta_1[4]) > treshhold:
+            new_theta_1[3:5] += gamma * der_1[3:5] / m
+        if np.abs(new_theta_2[3]) > treshhold or np.abs(new_theta_2[4]) > treshhold:
+            new_theta_2[3:5] += gamma * der_2[3:5] / m
         
-    #print "scale 1", np.array([[t[1], t[4], 0], [t[3], t[2], 0]], np.float32)
-    #print "scale 2", np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
-    
-    #new_img = cv2.warpAffine(new_img, m1, size)
-    #dummy_2 = cv2.warpAffine(dummy_2, m2, size)
-    
-    #Scaling and skewing
-    mat_deform_1 = np.array([[t[1], t[4], 0], [t[3], t[2], 0]], np.float32)
-    new_img = cv2.warpAffine(new_img, mat_deform_1, size)                      
-    
-    #Restore images' centers after skewing
-    cntr = np.transpose(np.array([c_x, c_y, 1]))
-    add_row = np.array([0, 0, 1])
-    mat_deform_full_1 = np.vstack((mat_deform_1, add_row))
-    cntr_err_1 = np.dot(mat_deform_full_1, cntr)
-    diff_1 = (cntr - cntr_err_1) * 2
-    mat_restore_1 = np.array([[1, 0, diff_1[0]], [0, 1, diff_1[1]]], np.float32)
-    new_img = cv2.warpAffine(new_img, mat_restore_1, size)
-    
-    #Rotation
-    mat_rot = cv2.getRotationMatrix2D((c_x * 2, c_y * 2), -a1, 1.0)
-    new_img = cv2.warpAffine(new_img, mat_rot, size)
-
-    #Translation      
-    mat_trans_1 = np.array([[1, 0, -t[5]], [0, 1, -t[6]] ], np.float32)
-    new_img = cv2.warpAffine(new_img, mat_trans_1, size)
-    
-    return new_img
+        #print "verfic", der_1[0]
+        #print "verfic", der_2[0]
+        
+        treshhold_out = 0.01
+        
+        print "iteration # ", k
+        print util.costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
+        
+        if util.costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < treshhold_out:
+            return np.array( [new_theta_1, new_theta_2] )
+        #print new_theta_1
+        #print new_theta_2
+        
+    return np.array( [new_theta_1, new_theta_2] )
 
 if __name__ == '__main__':
     import sys
@@ -171,16 +167,18 @@ if __name__ == '__main__':
         #print matched_p2
         
         #Parameters for Gradient Descent
-        iterations = 1000
-        gamma = 0.000002
+        iterations = 100
+        #gamma = 0.000002
         gamma_transl = 0.05
+        gamma = 10e-10
+        gamma_transl = gamma
         lambd = 10e3
         #Intitial parameters
         theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
          
         #Run Gradient
-        t_1, t_2 = util.gradientDescent(iterations, matched_p1, matched_p2,
+        t_1, t_2 = gradientDescent(iterations, matched_p1, matched_p2,
                                        theta_1, theta_2, gamma, lambd, gamma_transl,
                                        img1, img2, size, c_x, c_y)
         
@@ -191,7 +189,8 @@ if __name__ == '__main__':
 			
         print '---------------------------------------------------'
       
-        result = stitch_for_visualization(img1, img2, t_1, t_2, c_x, c_y, size)
+        result = util.stitch_for_visualization(img1, img2, t_1, t_2, c_x, c_y, size)
+        util.visualize(img1, img2, matched_p1, matched_p2, t_1, t_2)
         
         cv2.imwrite('output.jpg', result)
     
@@ -200,7 +199,7 @@ if __name__ == '__main__':
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.25) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.1) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)

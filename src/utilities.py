@@ -5,6 +5,7 @@ Created on May 7, 2012
 '''
 import numpy as np
 from numpy.ma.core import cos, sin
+import cv2
 
 #theta = np.array( [alpha, s_x, s_y, sk_x, sk_y, x_0, y_0] )
 
@@ -145,163 +146,98 @@ def derivatives(p_1, p_2, theta_1, theta_2):
     return np.array([deriv_1, deriv_2])
 
 #gamma - learning rate
-def gradientDescent(iterations, points_1, points_2, theta_1, theta_2,
-                    gamma, lambd, gamma_transl, img1, img2, size, c_x, c_y):
-    new_theta_1 = theta_1.copy()
-    new_theta_2 = theta_2.copy()
-    
-    m = points_1.shape[0]
-    
-    for k in range(iterations):
-        #Derivatives - respect to theta_1 and theta_2
-        der_1 = np.zeros(theta_1.size).reshape(theta_1.shape)
-        der_2 = np.zeros(theta_2.size).reshape(theta_2.shape)
-        
-        for i in range(m):
-            
-            tmp_1, tmp_2  = derivatives(points_1[i], points_2[i], new_theta_1, new_theta_2)
-            #print "deriv_1"
-            #print tmp_1
-            #print "deriv_2"
-            #print tmp_2
-            der_1 += tmp_1
-            der_2 += tmp_2
-            #print der_1
-            #print der_2
-            
-#Visualization=--------------------------------        
-#        if (k % 300 == 0):
-#            res = util.stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
-#            winname = "Iteration #" + (str)(k)
-#            matrix_1 = composeAffineMatrix(new_theta_1)
-#            matrix_2 = composeAffineMatrix(new_theta_2)
-#            mosaicing.draw_distance_lines(res, points_1, points_2, new_theta_1, new_theta_2, c_x, c_y)
-#            cv2.imshow(winname, res)
-#            cv2.moveWindow(winname, 0, 0)
-#            0xFF & cv2.waitKey()
-#            cv2.destroyAllWindows() 
-#Visualization=--------------------------------
-        
-        #print "Sum of derivatives for 1st parameter without penalty", der_1[0]
-        
-        
-        
-        #Penalize
-        der_1[3:5] = der_1[3:5] + lambd * new_theta_1[3:5]
-        der_2[3:5] = der_2[3:5] + lambd * new_theta_2[3:5]
-        
-        #print "Sum of derivatives for 1st parameter WITH penalty", der_1[0]
-        #print der_1[1:3]
-        #print dummy_1
-        dummy_1 = lambd * np.abs(np.array([1., 1]) - new_theta_1[1:3])
-        dummy_2 = lambd * np.abs(np.array([1., 1]) - new_theta_2[1:3])
-        der_1[1:3] = der_1[1:3] + dummy_1#lambd * np.abs([1., 1] - der_1[1:3]) #sx, sy = 1
-        der_2[1:3] = der_2[1:3] + dummy_2#lambd * np.abs([1., 1] - der_2[1:3]) #sx, sy = 1
-        #Refresh parameters
-        #new_theta_1 = new_theta_1 - gamma * der_1 / m #- lambd * new_theta_1 / m
-        #new_theta_2 = new_theta_2 - gamma * der_2 / m #- lambd * new_theta_2 / m
-        
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        new_theta_1[0] = new_theta_1[0] - gamma * der_1[0] / m
-        new_theta_2[0] = new_theta_2[0] - gamma * der_2[0] / m
-        new_theta_1[3:5] = new_theta_1[3:5] - gamma * der_1[3:5] / m
-        new_theta_2[3:5] = new_theta_2[3:5] - gamma * der_2[3:5] / m
-        new_theta_1[5:7] = new_theta_1[5:7] - gamma_transl * der_1[5:7] / m
-        new_theta_2[5:7] = new_theta_2[5:7] - gamma_transl * der_2[5:7] / m
-
-        treshhold = 0.15
-        #If Skx > threshhold, rollback         
-        if np.abs(new_theta_1[3]) > treshhold or np.abs(new_theta_1[4]) > treshhold:
-            new_theta_1[3:5] += gamma * der_1[3:5] / m
-        if np.abs(new_theta_2[3]) > treshhold or np.abs(new_theta_2[4]) > treshhold:
-            new_theta_2[3:5] += gamma * der_2[3:5] / m
-        
-        #print "verfic", der_1[0]
-        #print "verfic", der_2[0]
-        
-        treshhold_out = 0.01
-        
-        print "iteration # ", k
-        print costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd)
-        
-        if costFunction(points_1, points_2, new_theta_1, new_theta_2, lambd) < treshhold_out:
-            return np.array( [new_theta_1, new_theta_2] )
-        #print new_theta_1
-        #print new_theta_2
-        
-    return np.array( [new_theta_1, new_theta_2] )
 
 
+
+def draw_distance_lines(img, p_1, p_2, matrix_1, matrix_2, c_x, c_y):
+    p1 = p_1.copy()
+    p2 = p_2.copy()
+    green = (0, 255, 0)
+    blue = (255, 0, 0)
+    red = (0, 0, 255)
+    
+    col = (255, 255, 255, 0)
+    
+    for i in range(p1.shape[0]):
         
+        newPoint_1 = transformPoint(p1[i], matrix_1)
+        newPoint_2 = transformPoint(p2[i], matrix_2)
+        
+        newPoint_1[0] = newPoint_1[0] + c_x * 2;
+        newPoint_1[1] = newPoint_1[1] + c_y * 2;
+        newPoint_2[0] = newPoint_2[0] + c_x * 2;
+        newPoint_2[1] = newPoint_2[1] + c_y * 2;
+    
+        (x1, y1) = ((int)(newPoint_1[0]), (int)(newPoint_1[1]))
+        (x2, y2) = ((int)(newPoint_2[0]), (int)(newPoint_2[1]))
+        
+        cv2.circle(img, (x1, y1), 6, col, -1)
+        cv2.circle(img, (x2, y2), 6, col, -1)
+        
+        cv2.line(img, (x1, y1), (x2, y2), col, 1)
 
 
-if __name__ == '__main__':
-    theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
-    theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
-#    p1 = np.array( [50, 150] )
-#    p2 = np.array( [150, 150] )
-#    p3 = np.array( [150, 50] )
-#    p4 = np.array( [50, 50] )
+def transform_for_opencv(img, t, size, c_x, c_y):
+    #Rotation angles in degrees
+    a1 = (t[0] * (180 / np.pi))
     
-    # House in center
-    p1 = np.array([-50., -50])
-    p2 = np.array([50., -50])
-    p3 = np.array([50., 50])
-    p4 = np.array([0., 100])
-    p5 = np.array([-50., 50])
-    #print p1.shape
-    #print transformPoint(p1, theta)
-    #print transformPoint(p2, theta)rcalc
-    #print transformPoint(p3, theta)
-    #print transformPoint(p4, theta)
+    #shift_x, shift_y = (800, 800)
+    #Shift images far way from corners
+    #of resulting mosaic
+    #c_x = c_x + shift_x
+    #c_y = c_y + shift_y
+    #c_x = c_x + shift_x
+    #c_y = c_y + shift_y
     
-    po_1 = np.array( [p1, p2, p3, p4, p5] )
-    po_2 = po_1.copy()
-    distor_1 = np.array([1.5, 1, 1, 0, 0, -1, 2])
-    distor_2 = np.array([-1., 1, 1, 0, 0, 3, 0])
-    for i in range(po_1.shape[0]):
-        po_1[i] = transformPoint(po_1[i], distor_1)
-    for i in range(po_1.shape[0]):
-        po_2[i] = transformPoint(po_2[i], distor_2)
+    initPrep_1 = np.array([[1., 0, c_x], [0, 1, c_y]])
+    new_img = cv2.warpAffine(img, initPrep_1, size)
         
-    #print "po_1"
-    #s1,s2 = ""
+    #print "scale 1", np.array([[t[1], t[4], 0], [t[3], t[2], 0]], np.float32)
+    #print "scale 2", np.array([[t_2[1], t_2[4], 0], [t_2[3], t_2[2], 0]], np.float32)
     
+    #new_img = cv2.warpAffine(new_img, m1, size)
+    #dummy_2 = cv2.warpAffine(dummy_2, m2, size)
     
-    #print po_1
-    #print po_2 
-    gamma = 0.00001
-    gamma_transl = 0.1
-    #gamma_transl = gamma
-    lambd = 1000
-    t_1, t_2 = gradientDescent(1500, po_1, po_2, theta_1, theta_2, gamma, lambd, gamma_transl)
-    #print po_1
-    #print po_2
-    s1 = ""
-    s2 = ""
-    for i in range(po_1.shape[0]):
-        s1 += (str)(po_1[i][0]) + "," + (str)(po_1[i][1]) + "," 
-        s2 += (str)(po_2[i][0]) + "," + (str)(po_2[i][1]) + ","
-    #print "po_1"
-    print s1
-    #print "po_2"
-    print s2
+    #Scaling and skewing
+    mat_deform_1 = np.array([[t[1], t[4], 0], [t[3], t[2], 0]], np.float32)
+    new_img = cv2.warpAffine(new_img, mat_deform_1, size)                      
     
-    s1 = ""
-    s2 = ""
-    for i in range(len(t_1)):
-        s1 += (str)(t_1[i]) + ","  
-        s2 += (str)(t_2[i]) + "," 
-    #print "theta_1"
-    print s1
-    #print "theta_2"
-    print s2
+    #Restore images' centers after skewing
+    cntr = np.transpose(np.array([c_x, c_y, 1]))
+    add_row = np.array([0, 0, 1])
+    mat_deform_full_1 = np.vstack((mat_deform_1, add_row))
+    cntr_err_1 = np.dot(mat_deform_full_1, cntr)
+    diff_1 = (cntr - cntr_err_1) * 2
+    mat_restore_1 = np.array([[1, 0, diff_1[0]], [0, 1, diff_1[1]]], np.float32)
+    new_img = cv2.warpAffine(new_img, mat_restore_1, size)
     
-    print "!!!!!!!!! m1"
-    m1 = composeAffineMatrix(t_1)
-    print m1;
-    print "!!!!!!!!! m2"
-    m2 = composeAffineMatrix(t_2)
-    print m2
+    #Rotation
+    mat_rot = cv2.getRotationMatrix2D((c_x * 2, c_y * 2), -a1, 1.0)
+    new_img = cv2.warpAffine(new_img, mat_rot, size)
+
+    #Translation      
+    mat_trans_1 = np.array([[1, 0, -t[5]], [0, 1, -t[6]] ], np.float32)
+    new_img = cv2.warpAffine(new_img, mat_trans_1, size)
     
+    return new_img
+
+def stitch_for_visualization(img1, img2, t_1, t_2, c_x, c_y, size):
+    new_img_1 = transform_for_opencv(img1, t_1, size, c_x, c_y)
+    new_img_2 = transform_for_opencv(img2, t_2, size, c_x, c_y)
     
+    new_img_1 /= 2
+    new_img_2 /= 2
+    
+    result = new_img_1 + new_img_2
+    
+    return result
+
+def visualize(img1, img2, points_1, points_2, new_theta_1, new_theta_2):
+    
+    size = (img1.shape[1] * 2, img1.shape[0] * 2)
+    c_y, c_x = (np.asarray(img1.shape[:2]) / 2.).tolist()
+    res = stitch_for_visualization(img1, img2, new_theta_1, new_theta_2, c_x, c_y, size)
+    draw_distance_lines(res, points_1, points_2, new_theta_1, new_theta_2, c_x, c_y)
+    cv2.imshow("RESULT", res)
+    0xFF & cv2.waitKey()
+    cv2.destroyAllWindows()         
