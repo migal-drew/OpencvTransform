@@ -167,15 +167,28 @@ if __name__ == '__main__':
         #print matched_p2
         
         #Parameters for Gradient Descent
-        iterations = 100
-        #gamma = 0.000002
+        iterations = 150
+        gamma = 0.000002
         gamma_transl = 0.05
-        gamma = 10e-10
-        gamma_transl = gamma
-        lambd = 10e3
+        #gamma = 10e-10
+        lambd = 10e4
         #Intitial parameters
         theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
+        
+        src = np.array(matched_p1[0:3], np.float32)
+        dst = np.array(matched_p2[0:3], np.float32)
+        warp_affine = cv2.getAffineTransform(src, dst)
+        
+        print "warp_affine ", warp_affine
+        
+        theta_1[0] = -np.cos(warp_affine[0][0])
+        theta_1[5] = -warp_affine[0][2]
+        theta_1[6] = -warp_affine[1][2]
+        
+        print "warp_affine.ravel()", warp_affine.ravel()
+        #theta_1 = np.concatenate((warp_affine.ravel(), [0, 0, 1]))
+        print "theta_1", theta_1
          
         #Run Gradient
         t_1, t_2 = gradientDescent(iterations, matched_p1, matched_p2,
@@ -199,7 +212,7 @@ if __name__ == '__main__':
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.1) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.25) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)

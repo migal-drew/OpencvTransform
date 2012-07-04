@@ -153,7 +153,7 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
         #tmp = np.matrix(Hessian + lambd * I)
         #print "TMP", tmp
         #delta_x = np.dot(tmp.I, -gradient)
-        delta_x = np.linalg.lstsq(Hessian + lambd * I, -gradient)
+        delta_x = np.linalg.lstsq(Hessian + lambd * I * Hessian, -gradient)
         
         #print "x", x
         #print"delta_x", delta_x[0]
@@ -189,11 +189,11 @@ def levenberg_marquardt(points_1, points_2, theta_1, theta_2,
         
         if (util.costFunction(points_1, points_2, x[0:7], x[7:14], penalty) >
             util.costFunction(points_1, points_2, x_old[0:7], x_old[7:14], penalty)):
-            lambd *= 1.2
+            lambd *= 2
             flag = True
             x = x_old
         else:
-            lambd /= 1.2
+            lambd /= 2
             flag = False
             
         #print"x_old", x_old
