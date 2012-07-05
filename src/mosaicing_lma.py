@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from common import anorm
+#from common import anorm
 import utilities as util
 import levenberg_marquardt as lma
 
@@ -77,8 +77,8 @@ if __name__ == '__main__':
         theta_1 = np.array([0, 1., 1, 0, 0, 0, 0])
         theta_2 = np.array([0, 1., 1, 0, 0, 0, 0])
          
-        src = np.array(matched_p1[0:3], np.float32)
-        dst = np.array(matched_p2[0:3], np.float32)
+        src = np.array(matched_p1[3:6], np.float32)
+        dst = np.array(matched_p2[3:6], np.float32)
         warp_affine = cv2.getAffineTransform(src, dst)
         
         print "warp_affine ", warp_affine
@@ -89,8 +89,8 @@ if __name__ == '__main__':
          
         #for LMA
         lam = 10.0
-        penalty = 10e3
-        threshold = 0.001
+        penalty = 10e2
+        threshold = 0.000001
         #Run LEVENBERG-MARQUARDT
         params = lma.levenberg_marquardt(matched_p1,
                                          matched_p2,
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     #print 'bruteforce match:',
     #vis_brute = match_and_draw( match_bruteforce, 0.75 )
     print 'flann match:',
-    vis_flann = match_and_draw( match_flann, 0.25) # flann tends to find more distant second
+    vis_flann = match_and_draw( match_flann, 0.2) # flann tends to find more distant second
                                                    # neighbours, so r_threshold is decreased
     #cv2.imshow('find_obj SURF', vis_brute)
     #cv2.imshow('find_obj SURF flann', vis_flann)
